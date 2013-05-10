@@ -360,7 +360,7 @@ sub store {
 
 =head1 NAME
 
-PerlPP - Preprocessor that uses Perl syntax
+Template::PerlPP - Preprocessor that uses Perl syntax
 
 =head1 SYNOPSIS
 
@@ -446,7 +446,7 @@ and the subtemplate has the lines
 The text will be copied from a section in the subtemplate into a section of the
 same name in the template.
 
-=item #set
+=item set
 
 Add a new value to the macro dictionary. The argument following the
 command name looks like any Perl assignment statement minus the
@@ -454,12 +454,12 @@ trailing semicolon. Thw expression may contain
 
     #set $URL = '<a href=\"http://www.stsci.edu/">Space Telescope</a>'
 
-=item #do
+=item do
 
 The remainder of the line is interpreted as perl code. For assignments, use
 the set command.
 
-=item #if
+=item if
 
 The text until the matching C<#endif> is included only if the
 expression in the C<#if> command is true.If false, the text is
@@ -475,7 +475,7 @@ which includes the following text if its expression is true.
     $TEXT
     #endif
 
-=item #while
+=item while
 
 Expand the text between the C<#while> and C<#endwhile> as long as the
 expression following the C<#while> is true.
@@ -487,7 +487,7 @@ expression following the C<#while> is true.
     #set $i = $i - 1
     #endwhile
 
-=item #for
+=item for
 
 Expand the text between the C<#for> and <#endfor> commands several
 times. The for command takes a name in the macro dictionary as its
