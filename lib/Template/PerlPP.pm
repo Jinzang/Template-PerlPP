@@ -3,7 +3,7 @@ use 5.008005;
 use strict;
 use warnings;
 
-our $VERSION = "0.71";
+our $VERSION = "0.72";
 
 use strict;
 use warnings;
@@ -11,6 +11,7 @@ use IO::File;
 
 use constant DEFAULTS => {
                           command_start => '#',
+                          command_end => '',
                           };
 
 use constant SINGLETON => {
@@ -44,7 +45,14 @@ sub new {
     my $defaults = DEFAULTS;
     my %self = (%$defaults, %config);
     
-    $self{command_pattern} = '^\s*' . quotemeta($self{command_start});
+    $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
+
+    if (length $self{command_end}) {
+        $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
+    } else {
+        $self{command_end_pattern} = '';
+    }
+
     return bless(\%self, $pkg);
 }
 
@@ -191,7 +199,10 @@ sub parse_code {
 sub parse_command {
     my ($self, $line) = @_;
     
-    if ($line =~ s/$self->{command_pattern}//) {
+    if ($line =~ s/$self->{command_start_pattern}//) {
+        $line =~ s/$self->{command_end_pattern}//
+            if $self->{command_end_pattern};
+
         $line =~ s/\s+$//;
         return split(' ', $line, 2)
     }
@@ -423,10 +434,13 @@ corresponding block in the subtemplate.
 
 =over 4
 
-=item $obj = Template::PerlPP->new(command_start => '#',);
+=item $obj = Template::PerlPP->new(command_start => '#', command_end => '');
 
 Create a new parser. The configuration allows you to set the string which starts
-a command (command_start).
+a command (command_start) and the string which ends a command (command_end).
+All commands end at the end of line. However, you may widh to place commends
+inside comments and comments may require a closing string. By setting
+command_end, the closing string will be stripped from the end of the string.
 
 =item $sub = $obj->parse_strings($template, $subtemplate);
 

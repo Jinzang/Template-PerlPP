@@ -4,7 +4,7 @@ use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 
 #----------------------------------------------------------------------
 # Create object
@@ -87,6 +87,20 @@ EOQ
 is($text, $text_ok, "Run compiled template"); # test 10
 
 #----------------------------------------------------------------------
+# Test configurable command start and end
+
+$template = <<'EOQ';
+/*set $x2 = 2 * $x */
+2 * $x = $x2
+EOQ
+
+$pp = Template::PerlPP->new(command_start => '/*', command_end => '*/');
+$sub = $pp->parse_strings($template);
+$text = $sub->({x => 3});
+
+is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 11
+
+#----------------------------------------------------------------------
 # Test for loop
 
 $template = <<'EOQ';
@@ -106,7 +120,7 @@ Ann : 4444
 Joe : 5555
 EOQ
 
-is($text, $text_ok, "For loop"); # test 11
+is($text, $text_ok, "For loop"); # test 12
 
 #----------------------------------------------------------------------
 # Test with block
@@ -130,7 +144,7 @@ $text_ok = <<'EOQ';
 2
 EOQ
 
-is($text, $text_ok, "With block"); # test 12
+is($text, $text_ok, "With block"); # test 13
 
 #----------------------------------------------------------------------
 # Test while loop
@@ -155,7 +169,7 @@ $text_ok = <<'EOQ';
 go
 EOQ
 
-is($text, $text_ok, "While loop"); # test 13
+is($text, $text_ok, "While loop"); # test 14
 
 #----------------------------------------------------------------------
 # Test if blocks
@@ -174,15 +188,15 @@ $sub = Template::PerlPP->parse_strings($template);
 
 $data = {x => 1};
 $text = $sub->($data);
-is($text, "\$x is 1 (one)\n", "If block"); # test 14
+is($text, "\$x is 1 (one)\n", "If block"); # test 15
 
 $data = {x => 2};
 $text = $sub->($data);
-is($text, "\$x is 2 (two)\n", "Elsif block"); # test 15
+is($text, "\$x is 2 (two)\n", "Elsif block"); # test 16
 
 $data = {x => 3};
 $text = $sub->($data);
-is($text, "\$x is unknown\n", "Elsif block"); # test 16
+is($text, "\$x is unknown\n", "Elsif block"); # test 17
 
 #----------------------------------------------------------------------
 # Create test directory
@@ -240,4 +254,4 @@ Joe 5555
 2 people
 EOQ
 
-is($text, $text_ok, "Parse files"); # test 17
+is($text, $text_ok, "Parse files"); # test 18
