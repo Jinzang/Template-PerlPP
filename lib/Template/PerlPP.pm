@@ -3,7 +3,7 @@ use 5.008005;
 use strict;
 use warnings;
 
-our $VERSION = "0.70";
+our $VERSION = "0.71";
 
 use strict;
 use warnings;
@@ -11,7 +11,6 @@ use IO::File;
 
 use constant DEFAULTS => {
                           command_start => '#',
-                          list_name => 'data',
                           };
 
 use constant SINGLETON => {
@@ -55,10 +54,10 @@ sub new {
 sub compile {
     my ($self, $lines) = @_;
 
-    my $code = <<"EOQ";
+    my $code = <<'EOQ';
 sub {
-my \$hash = Template::Hashlist->new ('$self->{list_name}', \@_);
-my \$text;
+my $hash = Template::Hashlist->new (@_);
+my $text = '';
 EOQ
 
     push(@$lines, "\n");
@@ -261,11 +260,11 @@ sub set {
 package Template::Hashlist;
 
 sub new {
-    my ($pkg, $list_name, @hash) = @_;
+    my ($pkg, @hash) = @_;
     
     my $self = bless ([], $pkg);
     foreach my $hash (@hash) {
-        $hash = {$list_name => $hash} unless ref $hash eq 'HASH';
+        $hash = {data => $hash} unless ref $hash eq 'HASH';
         $self->push ($hash);
     }
 
@@ -303,10 +302,10 @@ sub push {
     my $newhash = {};
     my $ref = ref ($hash);
     if (! $ref) {
-        $newhash->{self} = \$hash;
+        $newhash->{data} = \$hash;
 
     } elsif ($ref ne 'HASH') {
-        $newhash->{self} = $hash;
+        $newhash->{data} = $hash;
 
     } else {
         while (my ($name, $entry) = each %$hash) {
@@ -405,9 +404,8 @@ the hash. The sigil on the variable should match the type of data contained in
 the hash field: a C<$> if it is a scalar, a C<@> if it is an array reference, or
 a C<%> if it is a hash reference. If the two disagree, you will get a run time
 error. You can pass a reference to an array instead of a hash to the subroutine
-this module generates. If you do, the template will refer to it using variable
-the string contained in list_name. By dedaule this is C<data>, so templates will
-use C<@data> to refer to the array passed to the subroutine.
+this module generates. If you do, the template will use C<@data> to refer to the
+array passed to the subroutine.
 
 =head1 METHODS
 
@@ -425,11 +423,10 @@ corresponding block in the subtemplate.
 
 =over 4
 
-=item $obj = Template::PerlPP->new(command_start => '#', list_name => 'data');
+=item $obj = Template::PerlPP->new(command_start => '#',);
 
 Create a new parser. The configuration allows you to set the string which starts
-a command (command_start) and the name used in the template if you pass the
-subroutine a reference to alist instead of a hash (list_name).
+a command (command_start).
 
 =item $sub = $obj->parse_strings($template, $subtemplate);
 
