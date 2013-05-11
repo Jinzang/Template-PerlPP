@@ -360,7 +360,7 @@ sub store {
 
 =head1 NAME
 
-Template::PerlPP - Preprocessor that uses Perl syntax
+Template::PerlPP - Template Preprocessor that uses Perl syntax
 
 =head1 SYNOPSIS
 
@@ -373,17 +373,55 @@ Template::PerlPP - Preprocessor that uses Perl syntax
 
 =head1 DESCRIPTION
 
-Template::PerlPP implements a text macro preprocessor. The preprocessor was
-developed for creating html files, but is gqeneral purpose and can be used for
-other tasks.
+This module simplifies the job of producing repetetive text output by letting
+you put data into a template. Templates also support the control structures in
+Perl: for and while loops, if else blocks, and some others. Creating output
+is a two step process. First you generate a subroutine from one or more
+templates, then you call the subroutine with your data to generate the output.
+This approach has the advantage of speeding things up when the same template
+is used more than once. However, it also poses a security risk because code
+you might not want executed may be included in the template. For this reason
+if the script using this module can be run from the web, make sure the account
+that runs it cannot write to the template. There are many template handling
+modules and you might wonder why there needs to be another. My reason for
+writing it is that it provides better control over whitespace than other
+template modules, which can be important for some data formats.
 
-The macro preprocessor compiles a template to a subroutine. When you call the
-subroutine with a reference to a hash or list, it fills the template with
-corresponding fields from the data and produces a string.
+The template format is line oriented. Commands occupy a single line and
+continue to the end of line. Commands start with a string, which is
+configurable, but is a sharp character (C<#>) by default. The command start
+string may be preceded by whitespace. If a command is block oriented, it is
+terminated by the word "end" followed by the command name. For example, the for
+command is terminated by an endfor command and the if command by an endif
+command.
+
+All lines may contain variables. As in Perl, variables are a sigil character
+(C<$>, C<@>, or C<&>) followed by one or more word characters. For example,
+C<$name> or C<@names>. To indicate a literal character instead of a variable,
+precede the sigil with a backslash. When you run the subroutine that this module
+generetaes, you pass it a reference to some data, which is usually a hash. The
+subroutine replaces variables with the value in the field of the same name in
+the hash. The sigil on the variable should match the type of data contained in
+the hash field: a C<$> if it is a scalar, a C<@> if it is an array reference, or
+a C<%> if it is a hash reference. If the two disagree, you will get a run time
+error. You can pass a reference to an array instead of a hash to the subroutine
+this module generates. If you do, the template will refer to it using variable
+the string contained in list_name. By dedaule this is C<data>, so templates will
+use C<@data> to refer to the array passed to the subroutine.
 
 =head1 METHODS
 
-There are three methds
+This three module has three public methods. The first, new, changes the module
+defaults. Parse_files and parse_stings generate a subroutine from one or more
+templates. You then call this subroutine with a reference to the data you want
+to substitute into the template to produce output.
+
+Using subtemplates along with a template allows you to place the common design
+elements in the template. You indicate where to replace parts of the template
+with parts of the template with the section command. If the template contains a
+section command with the same name as one of the subtemplates, it replaces the
+contents of the template inside the section with the contents of the
+corresponding block in the subtemplate.
 
 =over 4
 
@@ -391,14 +429,14 @@ There are three methds
 
 Create a new parser. The configuration allows you to set the string which starts
 a command (command_start) and the name used in the template if you pass the
-subroutine a list instead of a hash (list_name).
+subroutine a reference to alist instead of a hash (list_name).
 
 =item $sub = $obj->parse_strings($template, $subtemplate);
 
-Generate a subroutine used to render data from a template and otionally a
-subtemplate. It can be invoked by an object created by a call to new, or you
-can Invoke it using the package name (Template::PerlPP), in which case it will
-call new for you.
+Generate a subroutine used to render data from a template and optionally one or
+more subtemplates. It can be invoked by an object created by a call to new, or
+you can invoke it using the package name (Template::PerlPP), in which case it
+will first call new for you.
 
 =item $sub = $obj->parse_files($template_file, $subtemplate_file);
 
@@ -409,29 +447,67 @@ its arguments.
 
 =head1 TEMPLATE SYNTAX
 
-If the first non-white char on a line is the coomand start sting, by default a
+If the first non-white char on a line is the coomand start string, by default a
 sharp character (C<#>). the line is interpreted as a command. The command name
-must immediately follow the sharp character and continues up to the first white
-space character. The text following the initial span of whitespace is the
-command argument. The argument continues up to the end of the line.
+must immediately follow the start string and the command name continues up to
+the first white space character. The text following the initial span of
+whitespace is the command argument. The argument continues up to the end of the
+line.
 
-Macros are ordinary Perl variables, starting with a dollar sign.
+Variables in the template have the same format as ordinary Perl variables,
+a string of word characters starting with a sigil character. for example,
 
-    $SUMMARY
+    $SUMMARY @data %dictionary
 
-is an examplea of a macro. A macro dictionary contains values that are
-substituted for the macro names. This dictionary is an argument to the
-preprocessor call. Values can also be added to the dictionary through
-the C<#set> command. If a macro is not found in the dictionary, the
-interpolator dies.
+is an examplea of a macro. The subroutine this module generates will substitute
+values in the data it is passed for the variables. New variables  can be added 
+with the C<#set> command. If a corresponing is not found in the data, the
+interpolator dies with the error undefined variable name.
 
 =over 4
 
+=item do
+
+The remainder of the line is interpreted as perl code. For assignments, use
+the set command.
+
+=item if
+
+The text until the matching C<#endif> is included only if the expression in the
+C<#if> command is true.If false, the text is skipped. The C<#if> command can
+contain an C<#else>, in which case the text before the C<#else> is included if
+the expression in the C<#if> command is true and the text after the C<#else> is
+included if it is false. You can also place an C<#elsif> command in the C<#if>
+block, which includes the following text if its expression is true.
+
+    #if $highlight eq 'y'
+    <em>$text</em>
+    #else
+    $text
+    #endif
+
+=item for
+
+Expand the text between the C<#for> and <#endfor> commands several times. The
+for command takes a name of a field in a hash as its argument. The value of this
+name should be a reference to a list. It will expand the text in the for block
+once for each element in the list. Within the for block, any element of the list
+is accesible. This is especially useful for displaying lists of hashes. For
+example, suppose the data field name PHONELIST points to an array. This array is
+a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
+
+    #for @PHONELIST
+    <p>$NAME<br>
+    $PHONE</p>
+    #endfor	
+
+displays the entire phone list.
+
 =item section
 
-If a template contains a section, the text until the endsection command will
-be replaced by the section with the same name in the subtemplate. For example,
-if the main template has the code
+If a template contains a section, the text until the endsection command will be
+replaced by the section block with the same name one the subtemplates. For
+example, if the main template has the code
 
     #section footer
     <div></div>
@@ -444,36 +520,16 @@ and the subtemplate has the lines
     #endsection
 
 The text will be copied from a section in the subtemplate into a section of the
-same name in the template.
+same name in the template. If there is no block with the same name, the text is
+not changed. 
 
 =item set
 
-Add a new value to the macro dictionary. The argument following the
-command name looks like any Perl assignment statement minus the
-trailing semicolon. Thw expression may contain 
+Adds a new variable or updates the value of an existing variable. The argument
+following the command name looks like any Perl assignment statement minus the
+trailing semicolon. For example, 
 
-    #set $URL = '<a href=\"http://www.stsci.edu/">Space Telescope</a>'
-
-=item do
-
-The remainder of the line is interpreted as perl code. For assignments, use
-the set command.
-
-=item if
-
-The text until the matching C<#endif> is included only if the
-expression in the C<#if> command is true.If false, the text is
-skipped. The C<#if> command can contain an C<#else>, in which case the
-text before the C<#else> is included if the expression in the C<#if>
-command is true and the text after the C<#else> is included if it is
-false. You can also place an C<#elsif> command in the C<#if> block,
-which includes the following text if its expression is true.
-
-    #if $HIGHLIGHT eq 'y'
-    <em>$TEXT</em>
-    #else
-    $TEXT
-    #endif
+    #set $link = "<a href=\"$url\">$titlele</a>"
 
 =item while
 
@@ -487,36 +543,14 @@ expression following the C<#while> is true.
     #set $i = $i - 1
     #endwhile
 
-=item for
-
-Expand the text between the C<#for> and <#endfor> commands several
-times. The for command takes a name in the macro dictionary as its
-argument. The value of this name should be a reference to a list. It
-will expand the text in the for block once for each element in the
-list.  Within the for block, any element of the list is treated as if
-it were part of the macro dictionary. This is especially useful for
-displaying lists of hashes. For example, suppose the macro dictionary
-name PHONELIST points to an array. This array is a list of hashes, and
-each hash has two entries, NAME and PHONE. Then the code
-
-    #for @PHONELIST
-    <p>$NAME<br>
-    $PHONE</p>
-    #endfor	
-
-displays the entire phone list.
-
 =item with
 
-Push the specified argument onto the dictionary stack. The argument
-should be a hash reference. Inside the with block hash values can be
-accessed by name.
+Lists with a hash can be accessed using the for command. Hashes within a hash
+are accessed using the with command. For example:
 
-    #with $PARAM
-    <ul>
-    <li>Name: $NAME</li>
-    <li>Address: $ADDRESS</li>
-    </ul>
+    #with $address
+    <p><i>$street<br />
+    $city, $state $zip</i></p.
     #endwith
 
 =back
