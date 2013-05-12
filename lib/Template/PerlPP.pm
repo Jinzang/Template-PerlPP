@@ -427,7 +427,7 @@ array passed to the subroutine.
 =head1 METHODS
 
 This three module has three public methods. The first, new, changes the module
-defaults. Compile_files and parse_stings generate a subroutine from one or more
+defaults. Compile_files and compile_strings generate a subroutine from one or more
 templates. You then call this subroutine with a reference to the data you want
 to substitute into the template to produce output.
 
@@ -477,7 +477,7 @@ a string of word characters starting with a sigil character. for example,
 
 is an examplea of a macro. The subroutine this module generates will substitute
 values in the data it is passed for the variables. New variables  can be added 
-with the C<#set> command. If a corresponing is not found in the data, the
+with the C<set> command. If a corresponing is not found in the data, the
 interpolator dies with the error undefined variable name.
 
 =over 4
@@ -489,11 +489,11 @@ the set command.
 
 =item if
 
-The text until the matching C<#endif> is included only if the expression in the
-C<#if> command is true.If false, the text is skipped. The C<#if> command can
-contain an C<#else>, in which case the text before the C<#else> is included if
-the expression in the C<#if> command is true and the text after the C<#else> is
-included if it is false. You can also place an C<#elsif> command in the C<#if>
+The text until the matching C<endif> is included only if the expression in the
+C<if> command is true.If false, the text is skipped. The C<if> command can
+contain an C<else>, in which case the text before the C<else> is included if
+the expression in the C<if> command is true and the text after the C<else> is
+included if it is false. You can also place an C<elsif> command in the C<if>
 block, which includes the following text if its expression is true.
 
     #if $highlight eq 'y'
@@ -504,7 +504,7 @@ block, which includes the following text if its expression is true.
 
 =item for
 
-Expand the text between the C<#for> and <#endfor> commands several times. The
+Expand the text between the C<for> and <endfor> commands several times. The
 for command takes a name of a field in a hash as its argument. The value of this
 name should be a reference to a list. It will expand the text in the for block
 once for each element in the list. Within the for block, any element of the list
@@ -549,8 +549,8 @@ trailing semicolon. For example,
 
 =item while
 
-Expand the text between the C<#while> and C<#endwhile> as long as the
-expression following the C<#while> is true.
+Expand the text between the C<while> and C<endwhile> as long as the
+expression following the C<while> is true.
 
     #set $i = 10
     <p>Countdown ...<br>
