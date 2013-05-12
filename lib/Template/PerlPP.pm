@@ -9,11 +9,6 @@ use strict;
 use warnings;
 use IO::File;
 
-use constant DEFAULTS => {
-                          command_start => '#',
-                          command_end => '',
-                          };
-
 use constant SINGLETON => {
                             do => 1,
                             else => 1,
@@ -42,8 +37,8 @@ use constant COMMANDS => {
 sub new {
     my ($pkg, %config) = @_;
     
-    my $defaults = DEFAULTS;
-    my %self = (%$defaults, %config);
+    my $parameters = $pkg->parameters();
+    my %self = (%$parameters, %config);
     
     $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
     $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
@@ -72,6 +67,20 @@ return $text;
 }
 EOQ
     return eval ($code);
+}
+
+#----------------------------------------------------------------------
+# Set default parameters for package
+
+sub parameters {
+    my ($pkg) = @_;
+    
+    my $parameters = {
+                      command_start => '#',
+                      command_end => '',
+                      };
+
+    return $parameters;
 }
 
 #----------------------------------------------------------------------
