@@ -1,10 +1,11 @@
 package Template::PerlPP;
+
 use 5.008005;
 use strict;
 use warnings;
 use IO::File;
 
-our $VERSION = "0.73";
+our $VERSION = "0.74";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -24,7 +25,7 @@ sub new {
 #----------------------------------------------------------------------
 # Compile a template into a subroutine which when called fills itself
 
-sub compile {
+sub compile_code {
     my ($self, $lines) = @_;
 
     my $code = <<'EOQ';
@@ -42,6 +43,67 @@ return $text;
 }
 EOQ
     return eval ($code);
+}
+
+#----------------------------------------------------------------------
+# Compile a list of template files
+
+sub compile_files {
+    my ($pkg, @templates) = @_; 
+    my $self = ref $pkg ? $pkg : $pkg->new();
+    
+    # Template precedes subtemplate, which precedes subsubtemplate
+    
+    my @block;
+    my $sections = {};
+    while (my $filename = pop(@templates)) {
+        my $fd = IO::File->new($filename, 'r');
+        die "Couldn't read $filename: $!\n" unless $fd;
+    
+        my @lines = <$fd>;
+        close $fd;
+
+        @block = $self->parse_block($sections, \@lines, '');
+    }
+    
+    return $self->compile_code(\@block);
+}
+
+#----------------------------------------------------------------------
+# Compile a list of templates contained in strings
+
+sub compile_strings {
+    my ($pkg, @templates) = @_;
+    my $self = ref $pkg ? $pkg : $pkg->new();
+    
+    # Template precedes subtemplate, which precedes subsubtemplate
+    
+    my @block;
+    my $sections = {};
+    foreach my $template (reverse @templates) {
+        my @lines = map {"$_\n"} split(/\n/, $template);
+        @block = $self->parse_block($sections, \@lines, '');
+    }
+    
+    return $self->compile_code(\@block);
+}
+
+#----------------------------------------------------------------------
+# Replace variable references with hashlist fetches
+
+sub encode {
+    my ($self, $value) = @_;
+
+    if (defined $value) {
+        my $pre = '{$hash->fetch(\'';
+        my $post = '\')}';
+        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$1$pre$2$post/g;
+
+    } else {
+        $value = '';
+    }
+    
+    return $value;
 }
 
 #----------------------------------------------------------------------
@@ -89,24 +151,6 @@ sub parameters {
                       };
 
     return $parameters;
-}
-
-#----------------------------------------------------------------------
-# Replace variable references with hashlist fetches
-
-sub encode {
-    my ($self, $value) = @_;
-
-    if (defined $value) {
-        my $pre = '{$hash->fetch(\'';
-        my $post = '\')}';
-        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$1$pre$2$post/g;
-
-    } else {
-        $value = '';
-    }
-    
-    return $value;
 }
 
 #----------------------------------------------------------------------
@@ -213,49 +257,6 @@ sub parse_command {
     }
     
     return;
-}
-
-#----------------------------------------------------------------------
-# Parse a list of template files
-
-sub parse_files {
-    my ($pkg, @templates) = @_; 
-    my $self = ref $pkg ? $pkg : $pkg->new();
-    
-    # Template precedes subtemplate, which precedes subsubtemplate
-    
-    my @block;
-    my $sections = {};
-    while (my $filename = pop(@templates)) {
-        my $fd = IO::File->new($filename, 'r');
-        die "Couldn't read $filename: $!\n" unless $fd;
-    
-        my @lines = <$fd>;
-        close $fd;
-
-        @block = $self->parse_block($sections, \@lines, '');
-    }
-    
-    return $self->compile(\@block);
-}
-
-#----------------------------------------------------------------------
-# Parse a list of templates contained in strings
-
-sub parse_strings {
-    my ($pkg, @templates) = @_;
-    my $self = ref $pkg ? $pkg : $pkg->new();
-    
-    # Template precedes subtemplate, which precedes subsubtemplate
-    
-    my @block;
-    my $sections = {};
-    foreach my $template (reverse @templates) {
-        my @lines = map {"$_\n"} split(/\n/, $template);
-        @block = $self->parse_block($sections, \@lines, '');
-    }
-    
-    return $self->compile(\@block);
 }
 
 #----------------------------------------------------------------------
@@ -381,9 +382,9 @@ Template::PerlPP - Template Preprocessor that uses Perl syntax
 
     use Template::PerlPP;
     my $pp = Template::PerlPP->new;
-    my $sub = $pp->parse_files($tenplate_name, $subtemplate_name);
+    my $sub = $pp->compile_files($tenplate_name, $subtemplate_name);
     # or
-    $sub = $pp->parse_strings($template, $subtemplate);
+    $sub = $pp->compile_strings($template, $subtemplate);
     my $output = $sub->($hash);
 
 =head1 DESCRIPTION
@@ -426,7 +427,7 @@ array passed to the subroutine.
 =head1 METHODS
 
 This three module has three public methods. The first, new, changes the module
-defaults. Parse_files and parse_stings generate a subroutine from one or more
+defaults. Compile_files and parse_stings generate a subroutine from one or more
 templates. You then call this subroutine with a reference to the data you want
 to substitute into the template to produce output.
 
@@ -447,16 +448,16 @@ All commands end at the end of line. However, you may widh to place commends
 inside comments and comments may require a closing string. By setting
 command_end, the closing string will be stripped from the end of the string.
 
-=item $sub = $obj->parse_strings($template, $subtemplate);
+=item $sub = $obj->compile_strings($template, $subtemplate);
 
 Generate a subroutine used to render data from a template and optionally one or
 more subtemplates. It can be invoked by an object created by a call to new, or
 you can invoke it using the package name (Template::PerlPP), in which case it
 will first call new for you.
 
-=item $sub = $obj->parse_files($template_file, $subtemplate_file);
+=item $sub = $obj->compile_files($template_file, $subtemplate_file);
 
-Like parse_strings, only the templates are read from the file names passed as
+Like compile_strings, only the templates are read from the file names passed as
 its arguments.
 
 =back

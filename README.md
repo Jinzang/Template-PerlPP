@@ -6,9 +6,9 @@ Template::PerlPP - Template Preprocessor that uses Perl syntax
 
     use Template::PerlPP;
     my $pp = Template::PerlPP->new;
-    my $sub = $pp->parse_files($tenplate_name, $subtemplate_name);
+    my $sub = $pp->compile_files($tenplate_name, $subtemplate_name);
     # or
-    $sub = $pp->parse_strings($template, $subtemplate);
+    $sub = $pp->compile_strings($template, $subtemplate);
     my $output = $sub->($hash);
 
 # DESCRIPTION
