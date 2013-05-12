@@ -2,34 +2,9 @@ package Template::PerlPP;
 use 5.008005;
 use strict;
 use warnings;
-
-our $VERSION = "0.72";
-
-use strict;
-use warnings;
 use IO::File;
 
-use constant SINGLETON => {
-                            do => 1,
-                            else => 1,
-                            elsif => 1,
-                            set => 1,
-                          };
-
-use constant COMMANDS => {
-                          do => "%%;",
-                          for => "foreach (%%) {\n\$hash->push(\$_);",
-                    	  endfor => "\$hash->pop();\n}",
-                          if => "if (%%) {",
-                          elsif => "} elsif (%%) {",
-                          else => "} else {",
-                          endif => "}",
-                          set => \&set,
-                          while => "while (%%) {",
-                          endwhile => "}",
-                    	  with => "\$hash->push(\\%%);",
-                          endwith => "\$hash->pop();",
-                         };
+our $VERSION = "0.73";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -67,6 +42,39 @@ return $text;
 }
 EOQ
     return eval ($code);
+}
+
+#----------------------------------------------------------------------
+# Get the translation of a template command
+
+sub get_command {
+    my ($self, $cmd) = @_;
+    
+    my $commands = {
+                    do => "%%;",
+                    for => "foreach (%%) {\n\$hash->push(\$_);",
+                	endfor => "\$hash->pop();\n}",
+                    if => "if (%%) {",
+                    elsif => "} elsif (%%) {",
+                    else => "} else {",
+                    endif => "}",
+                    set => \&set,
+                    while => "while (%%) {",
+                    endwhile => "}",
+                	with => "\$hash->push(\\%%);",
+                    endwith => "\$hash->pop();",
+                    };
+
+    return $commands->{$cmd};    
+}
+
+#----------------------------------------------------------------------
+# Is a command a singleton command?
+
+sub is_singleton {
+    my ($self, $cmd) = @_;
+        
+    return ! ($cmd eq 'section' || $self->get_command("end$cmd"));
 }
 
 #----------------------------------------------------------------------
@@ -108,15 +116,10 @@ sub parse_block {
     my ($self, $sections, $lines, $command) = @_;
 
     my @block;
-    my $singleton = SINGLETON;
-    
     while (defined (my $line = shift @$lines)) {
         my ($cmd, $arg) = $self->parse_command($line);
         
-        if (! defined $cmd) {
-            push(@block, $line);
-
-        } else {
+        if (defined $cmd) {
             if (substr($cmd, 0, 3) eq 'end') {
                 $arg = substr($cmd, 3);
                 die "Mismatched block end ($command/$arg)"
@@ -125,7 +128,7 @@ sub parse_block {
                 push(@block, $line);
                 return @block;
 
-            } elsif ($singleton->{$cmd}) {
+            } elsif ($self->is_singleton($cmd)) {
                 push(@block, $line);
 
             } else {
@@ -140,6 +143,9 @@ sub parse_block {
                     push(@block, $line, @sub_block);
                 }
             }
+
+        } else {
+            push(@block, $line);
         }
     }
     
@@ -155,8 +161,7 @@ sub parse_code {
 
     my $code = '';
     my $stash = '';
-    my $commands = COMMANDS;
-    
+
     while (defined (my $line = shift @$lines)) {
         my ($cmd, $arg) = $self->parse_command($line);
         
@@ -167,11 +172,10 @@ sub parse_code {
                 $stash = '';
             }
 
-            die "Unknown command: $cmd\n" unless exists $commands->{$cmd};
+            my $command = $self->get_command($cmd);
+            die "Unknown command: $cmd\n" unless defined $command;
             
-            my $command = $commands->{$cmd};
             my $ref = ref ($command);
-
             if (! $ref) {
                 $arg = $self->encode($arg);
                 $command =~ s/%%/$arg/;
