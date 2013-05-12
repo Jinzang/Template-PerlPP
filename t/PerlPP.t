@@ -90,7 +90,7 @@ is($text, $text_ok, "Run compiled template"); # test 10
 # Test configurable command start and end
 
 $template = <<'EOQ';
-/*set $x2 = 2 * $x */
+/* set $x2 = 2 * $x */
 2 * $x = $x2
 EOQ
 
