@@ -1,19 +1,26 @@
 #!/usr/bin/env perl
 use strict;
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
+use Test::More tests => 17;
 
-use Test::More tests => 18;
+#----------------------------------------------------------------------
+# Load package
+
+my @path = split(/\//, $0);
+pop(@path);
+
+my $bin = join('/', @path);
+my $lib = "$bin/../lib";
+unshift(@INC, $lib);
+
+require Template::PerlPP;
 
 #----------------------------------------------------------------------
 # Create object
 
-BEGIN {use_ok("Template::PerlPP");} # test 1
-
 my $pp = Template::PerlPP->new();
-isa_ok($pp, "Template::PerlPP"); # test 2
-can_ok($pp, qw(parse_files parse_strings)); # test 3
+isa_ok($pp, "Template::PerlPP"); # test 1
+can_ok($pp, qw(parse_files parse_strings)); # test 2
 
 #----------------------------------------------------------------------
 # Test parse_block
@@ -43,11 +50,11 @@ my @ok = grep {$_ !~ /section/} @lines;
 my @block = $pp->parse_block($sections, \@lines, '');
 my @sections = sort keys %$sections;
 
-is_deeply(\@block, \@ok, "All lines returned from parse_block"); # test 4
+is_deeply(\@block, \@ok, "All lines returned from parse_block"); # test 3
 is_deeply(\@sections, [qw(footer header)],
-          "All sections returned from parse_block"); #test 5
+          "All sections returned from parse_block"); #test 4
 is_deeply($sections->{footer}, ["Footer\n"],
-          "Right value in footer from parse_block"); # test 6
+          "Right value in footer from parse_block"); # test 5
 
 my $subtemplate = <<'EOQ';
 #section header
@@ -69,12 +76,12 @@ $sections = {};
 @block = $pp->parse_block($sections, \@sublines, '');
 @block = $pp->parse_block($sections, \@lines, '');
 
-is_deeply(\@block, \@ok, "Template and subtemplate with parse_block"); # test 7
+is_deeply(\@block, \@ok, "Template and subtemplate with parse_block"); # test 6
 is_deeply($sections->{header}, ["Another Header\n"],
-          "Right value in header for template & subtemplate");
+          "Right value in header for template & subtemplate"); # test 7
 
 my $sub = $pp->parse_strings($template, $subtemplate);
-is(ref $sub, 'CODE', "Compiled template"); # test 9
+is(ref $sub, 'CODE', "Compiled template"); # test 8
 
 my $text = $sub->([1, 2]);
 my $text_ok = <<'EOQ';
@@ -84,7 +91,7 @@ Odd line
 Another Footer
 EOQ
 
-is($text, $text_ok, "Run compiled template"); # test 10
+is($text, $text_ok, "Run compiled template"); # test 9
 
 #----------------------------------------------------------------------
 # Test configurable command start and end
@@ -98,7 +105,7 @@ $pp = Template::PerlPP->new(command_start => '/*', command_end => '*/');
 $sub = $pp->parse_strings($template);
 $text = $sub->({x => 3});
 
-is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 11
+is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 10
 
 #----------------------------------------------------------------------
 # Test for loop
@@ -120,7 +127,7 @@ Ann : 4444
 Joe : 5555
 EOQ
 
-is($text, $text_ok, "For loop"); # test 12
+is($text, $text_ok, "For loop"); # test 11
 
 #----------------------------------------------------------------------
 # Test with block
@@ -144,7 +151,7 @@ $text_ok = <<'EOQ';
 2
 EOQ
 
-is($text, $text_ok, "With block"); # test 13
+is($text, $text_ok, "With block"); # test 12
 
 #----------------------------------------------------------------------
 # Test while loop
@@ -169,7 +176,7 @@ $text_ok = <<'EOQ';
 go
 EOQ
 
-is($text, $text_ok, "While loop"); # test 14
+is($text, $text_ok, "While loop"); # test 13
 
 #----------------------------------------------------------------------
 # Test if blocks
@@ -188,21 +195,21 @@ $sub = Template::PerlPP->parse_strings($template);
 
 $data = {x => 1};
 $text = $sub->($data);
-is($text, "\$x is 1 (one)\n", "If block"); # test 15
+is($text, "\$x is 1 (one)\n", "If block"); # test 14
 
 $data = {x => 2};
 $text = $sub->($data);
-is($text, "\$x is 2 (two)\n", "Elsif block"); # test 16
+is($text, "\$x is 2 (two)\n", "Elsif block"); # test 15
 
 $data = {x => 3};
 $text = $sub->($data);
-is($text, "\$x is unknown\n", "Elsif block"); # test 17
+is($text, "\$x is unknown\n", "Elsif block"); # test 16
 
 #----------------------------------------------------------------------
 # Create test directory
 
-system("/bin/rm -rf $Bin/../test");
-mkdir "$Bin/../test";
+system("/bin/rm -rf $bin/../test");
+mkdir "$bin/../test";
 
 $template = <<'EOQ';
 #section header
@@ -229,12 +236,12 @@ $num people
 #endsection
 EOQ
 
-my $template_file = "$Bin/../test/template.txt";
+my $template_file = "$bin/../test/template.txt";
 my $fd = IO::File->new($template_file, 'w');
 print $fd $template;
 close $fd;
 
-my $subtemplate_file = "$Bin/../test/subtemplate.txt";
+my $subtemplate_file = "$bin/../test/subtemplate.txt";
 $fd = IO::File->new($subtemplate_file, 'w');
 print $fd $subtemplate;
 close $fd;
@@ -254,4 +261,4 @@ Joe 5555
 2 people
 EOQ
 
-is($text, $text_ok, "Parse files"); # test 18
+is($text, $text_ok, "Parse files"); # test 17
