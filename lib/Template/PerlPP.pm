@@ -401,7 +401,7 @@ template modules, which can be important for some data formats.
 The template format is line oriented. Commands occupy a single line and
 continue to the end of line. Commands start with a string, which is
 configurable, but is a sharp character (C<#>) by default. The command start
-string may be preceded by whitespace. If a command is block oriented, it is
+string may be preceded by whitespace. If a command is a block command, it is
 terminated by the word "end" followed by the command name. For example, the for
 command is terminated by an endfor command and the if command by an endif
 command.
@@ -461,10 +461,9 @@ its arguments.
 
 If the first non-white char on a line is the coomand start string, by default a
 sharp character (C<#>). the line is interpreted as a command. The command name
-must immediately follow the start string and the command name continues up to
-the first white space character. The text following the initial span of
-whitespace is the command argument. The argument continues up to the end of the
-line.
+continues up to the first white space character. The text following the initial
+span of whitespace is the command argument. The argument continues up to the end
+of the line.
 
 Variables in the template have the same format as ordinary Perl variables,
 a string of word characters starting with a sigil character. for example,
@@ -541,7 +540,7 @@ Adds a new variable or updates the value of an existing variable. The argument
 following the command name looks like any Perl assignment statement minus the
 trailing semicolon. For example, 
 
-    #set $link = "<a href=\"$url\">$titlele</a>"
+    #set $link = "<a href=\"$url\">$title</a>"
 
 =item while
 
@@ -560,7 +559,7 @@ expression following the C<#while> is true.
 Lists with a hash can be accessed using the for command. Hashes within a hash
 are accessed using the with command. For example:
 
-    #with $address
+    #with %address
     <p><i>$street<br />
     $city, $state $zip</i></p.
     #endwith
