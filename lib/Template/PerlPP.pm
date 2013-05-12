@@ -46,12 +46,7 @@ sub new {
     my %self = (%$defaults, %config);
     
     $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
-
-    if (length $self{command_end}) {
-        $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
-    } else {
-        $self{command_end_pattern} = '';
-    }
+    $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
 
     return bless(\%self, $pkg);
 }
@@ -200,10 +195,7 @@ sub parse_command {
     my ($self, $line) = @_;
     
     if ($line =~ s/$self->{command_start_pattern}//) {
-        $line =~ s/$self->{command_end_pattern}//
-            if $self->{command_end_pattern};
-
-        $line =~ s/\s+$//;
+        $line =~ s/$self->{command_end_pattern}//;
         return split(' ', $line, 2)
     }
     
