@@ -1,11 +1,11 @@
-package Template::PerlPP;
+package Template::Twostep;
 
 use 5.008005;
 use strict;
 use warnings;
 use IO::File;
 
-our $VERSION = "0.74";
+our $VERSION = "0.75";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -376,12 +376,12 @@ sub store {
 
 =head1 NAME
 
-Template::PerlPP - Template Preprocessor that uses Perl syntax
+Template::Twostep - Compile templates into a subroutine
 
 =head1 SYNOPSIS
 
-    use Template::PerlPP;
-    my $pp = Template::PerlPP->new;
+    use Template::Twostep;
+    my $pp = Template::Twostep->new;
     my $sub = $pp->compile_files($tenplate_name, $subtemplate_name);
     # or
     $sub = $pp->compile_strings($template, $subtemplate);
@@ -440,7 +440,7 @@ corresponding block in the subtemplate.
 
 =over 4
 
-=item $obj = Template::PerlPP->new(command_start => '#', command_end => '');
+=item $obj = Template::Twostep->new(command_start => '#', command_end => '');
 
 Create a new parser. The configuration allows you to set the string which starts
 a command (command_start) and the string which ends a command (command_end).
@@ -452,7 +452,7 @@ command_end, the closing string will be stripped from the end of the string.
 
 Generate a subroutine used to render data from a template and optionally one or
 more subtemplates. It can be invoked by an object created by a call to new, or
-you can invoke it using the package name (Template::PerlPP), in which case it
+you can invoke it using the package name (Template::Twostep), in which case it
 will first call new for you.
 
 =item $sub = $obj->compile_files($template_file, $subtemplate_file);

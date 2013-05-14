@@ -1,11 +1,11 @@
 ## NAME
 
-Template::PerlPP - Template Preprocessor that uses Perl syntax
+Template::Twostep - Compile templates into a subroutine
 
 ## SYNOPSIS
 
-    use Template::PerlPP;
-    my $pp = Template::PerlPP->new;
+    use Template::Twostep;
+    my $pp = Template::Twostep->new;
     my $sub = $pp->compile_files($tenplate_name, $subtemplate_name);
     # or
     $sub = $pp->compile_strings($template, $subtemplate);

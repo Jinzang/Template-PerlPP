@@ -1,5 +1,5 @@
 {
-   "abstract" : "Template Preprocessor that uses Perl syntax",
+   "abstract" : "Compile templates into a subroutine",
    "author" : [
       "Bernie Simon <bernie.simon@gmail.com>"
    ],
@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
-   "name" : "Template-PerlPP",
+   "name" : "Template-Twostep",
    "no_index" : {
       "directory" : [
          "t",

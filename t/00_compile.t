@@ -5,7 +5,7 @@ use lib "$Bin/../lib";
 use Test::More;
 
 use_ok $_ for qw(
-    Template::PerlPP
+    Template::Twostep
 );
 
 done_testing;
