@@ -3,19 +3,21 @@ package Template::Twostep;
 use 5.008005;
 use strict;
 use warnings;
+use integer;
+
 use IO::File;
 
-our $VERSION = "0.75";
+our $VERSION = "0.76";
 
 #----------------------------------------------------------------------
 # Create a new template engine
 
 sub new {
     my ($pkg, %config) = @_;
-    
+
     my $parameters = $pkg->parameters();
     my %self = (%$parameters, %config);
-    
+
     $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
     $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
 
@@ -42,30 +44,33 @@ chomp $text;
 return $text;
 }
 EOQ
-    return eval ($code);
+
+    my $sub = eval ($code);
+    die $@ unless $sub;
+    return $sub;
 }
 
 #----------------------------------------------------------------------
 # Compile a list of template files
 
 sub compile_files {
-    my ($pkg, @templates) = @_; 
+    my ($pkg, @templates) = @_;
     my $self = ref $pkg ? $pkg : $pkg->new();
-    
+
     # Template precedes subtemplate, which precedes subsubtemplate
-    
+
     my @block;
     my $sections = {};
     while (my $filename = pop(@templates)) {
         my $fd = IO::File->new($filename, 'r');
         die "Couldn't read $filename: $!\n" unless $fd;
-    
+
         my @lines = <$fd>;
         close $fd;
 
         @block = $self->parse_block($sections, \@lines, '');
     }
-    
+
     return $self->compile_code(\@block);
 }
 
@@ -75,16 +80,16 @@ sub compile_files {
 sub compile_strings {
     my ($pkg, @templates) = @_;
     my $self = ref $pkg ? $pkg : $pkg->new();
-    
+
     # Template precedes subtemplate, which precedes subsubtemplate
-    
+
     my @block;
     my $sections = {};
     foreach my $template (reverse @templates) {
         my @lines = map {"$_\n"} split(/\n/, $template);
         @block = $self->parse_block($sections, \@lines, '');
     }
-    
+
     return $self->compile_code(\@block);
 }
 
@@ -102,7 +107,7 @@ sub encode {
     } else {
         $value = '';
     }
-    
+
     return $value;
 }
 
@@ -111,7 +116,7 @@ sub encode {
 
 sub get_command {
     my ($self, $cmd) = @_;
-    
+
     my $commands = {
                     do => "%%;",
                     for => "foreach (%%) {\n\$hash->push(\$_);",
@@ -127,7 +132,7 @@ sub get_command {
                     endwith => "\$hash->pop();",
                     };
 
-    return $commands->{$cmd};    
+    return $commands->{$cmd};
 }
 
 #----------------------------------------------------------------------
@@ -135,7 +140,7 @@ sub get_command {
 
 sub is_singleton {
     my ($self, $cmd) = @_;
-        
+
     return ! ($cmd eq 'section' || $self->get_command("end$cmd"));
 }
 
@@ -144,7 +149,7 @@ sub is_singleton {
 
 sub parameters {
     my ($pkg) = @_;
-    
+
     my $parameters = {
                       command_start => '#',
                       command_end => '',
@@ -162,7 +167,7 @@ sub parse_block {
     my @block;
     while (defined (my $line = shift @$lines)) {
         my ($cmd, $arg) = $self->parse_command($line);
-        
+
         if (defined $cmd) {
             if (substr($cmd, 0, 3) eq 'end') {
                 $arg = substr($cmd, 3);
@@ -177,12 +182,12 @@ sub parse_block {
 
             } else {
                 my @sub_block = $self->parse_block($sections, $lines, $cmd);
-    
+
                 if ($cmd eq 'section') {
                     pop(@sub_block);
                     $sections->{$arg} = \@sub_block unless exists $sections->{$arg};
                     push(@block, @{$sections->{$arg}});
-                
+
                 } else {
                     push(@block, $line, @sub_block);
                 }
@@ -192,7 +197,7 @@ sub parse_block {
             push(@block, $line);
         }
     }
-    
+
     die "Missing end" if $command;
     return @block;
 }
@@ -208,7 +213,7 @@ sub parse_code {
 
     while (defined (my $line = shift @$lines)) {
         my ($cmd, $arg) = $self->parse_command($line);
-        
+
         if (defined $cmd) {
             if (length $stash) {
                 $code .= "\$text .= <<\"EOQ\";\n";
@@ -218,7 +223,7 @@ sub parse_code {
 
             my $command = $self->get_command($cmd);
             die "Unknown command: $cmd\n" unless defined $command;
-            
+
             my $ref = ref ($command);
             if (! $ref) {
                 $arg = $self->encode($arg);
@@ -239,9 +244,9 @@ sub parse_code {
 
     if (length $stash) {
         $code .= "\$text .= <<\"EOQ\";\n";
-        $code .= "${stash}EOQ\n";        
+        $code .= "${stash}EOQ\n";
     }
-    
+
     return $code;
 }
 
@@ -250,12 +255,14 @@ sub parse_code {
 
 sub parse_command {
     my ($self, $line) = @_;
-    
+
     if ($line =~ s/$self->{command_start_pattern}//) {
         $line =~ s/$self->{command_end_pattern}//;
+        $line =~ s/\s+$//;
+
         return split(' ', $line, 2)
     }
-    
+
     return;
 }
 
@@ -278,7 +285,7 @@ package Template::Hashlist;
 
 sub new {
     my ($pkg, @hash) = @_;
-    
+
     my $self = bless ([], $pkg);
     foreach my $hash (@hash) {
         $hash = {data => $hash} unless ref $hash eq 'HASH';
@@ -293,7 +300,7 @@ sub new {
 
 sub fetch {
     my ($self, $name) = @_;
-    
+
     for my $hash (@$self) {
         return $hash->{$name} if exists $hash->{$name};
     }
@@ -354,7 +361,7 @@ sub store {
     $i = 0 unless $i < @$self;
 
     if ($sigil eq '$') {
-        my $val = @val == 1 ? $val[0] : @val; 
+        my $val = @val == 1 ? $val[0] : @val;
         $self->[$i]{$name} = \$val;
 
     } elsif ($sigil eq '@') {
@@ -364,7 +371,7 @@ sub store {
         my %val = @val;
         $self->[$i]{$name} = \%val;
     }
-    
+
     return;
 }
 
@@ -476,7 +483,7 @@ a string of word characters starting with a sigil character. for example,
     $SUMMARY @data %dictionary
 
 is an examplea of a macro. The subroutine this module generates will substitute
-values in the data it is passed for the variables. New variables  can be added 
+values in the data it is passed for the variables. New variables  can be added
 with the C<set> command. If a corresponing is not found in the data, the
 interpolator dies with the error undefined variable name.
 
@@ -515,7 +522,7 @@ a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
     #for @PHONELIST
     <p>$NAME<br>
     $PHONE</p>
-    #endfor	
+    #endfor
 
 displays the entire phone list.
 
@@ -527,7 +534,7 @@ example, if the main template has the code
 
     #section footer
     <div></div>
-    #endsection 
+    #endsection
 
 and the subtemplate has the lines
 
@@ -537,13 +544,13 @@ and the subtemplate has the lines
 
 The text will be copied from a section in the subtemplate into a section of the
 same name in the template. If there is no block with the same name, the text is
-not changed. 
+not changed.
 
 =item set
 
 Adds a new variable or updates the value of an existing variable. The argument
 following the command name looks like any Perl assignment statement minus the
-trailing semicolon. For example, 
+trailing semicolon. For example,
 
     #set $link = "<a href=\"$url\">$title</a>"
 
