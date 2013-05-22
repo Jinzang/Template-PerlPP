@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.76";
+our $VERSION = "0.75";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -305,7 +305,8 @@ sub fetch {
         return $hash->{$name} if exists $hash->{$name};
     }
 
-    die "Variable $name is undefined";
+    my $value = '';
+    return \$value;
 }
 
 #----------------------------------------------------------------------
@@ -483,9 +484,9 @@ a string of word characters starting with a sigil character. for example,
     $SUMMARY @data %dictionary
 
 is an examplea of a macro. The subroutine this module generates will substitute
-values in the data it is passed for the variables. New variables  can be added
-with the C<set> command. If a corresponing is not found in the data, the
-interpolator dies with the error undefined variable name.
+values in the data it is passed for the variables. If a corresponding field is
+not found in the data, the interpolator substitutes an empty string. New
+variables can be added with the C<set> command.
 
 =over 4
 
