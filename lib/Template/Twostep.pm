@@ -20,6 +20,8 @@ sub new {
 
     $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
     $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
+    $self{command_end_pattern} = '\s*' . $self{command_end_pattern}
+                if length $self{command_end};
 
     return bless(\%self, $pkg);
 }
@@ -258,8 +260,6 @@ sub parse_command {
 
     if ($line =~ s/$self->{command_start_pattern}//) {
         $line =~ s/$self->{command_end_pattern}//;
-        $line =~ s/\s+$//;
-
         return split(' ', $line, 2)
     }
 
