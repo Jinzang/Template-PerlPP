@@ -20,7 +20,7 @@ require Template::Twostep;
 
 my $pp = Template::Twostep->new();
 isa_ok($pp, "Template::Twostep"); # test 1
-can_ok($pp, qw(compile_files compile_strings)); # test 2
+can_ok($pp, qw(new compile)); # test 2
 
 #----------------------------------------------------------------------
 # Test parse_block
@@ -80,7 +80,7 @@ is_deeply(\@block, \@ok, "Template and subtemplate with parse_block"); # test 6
 is_deeply($sections->{header}, ["Another Header\n"],
           "Right value in header for template & subtemplate"); # test 7
 
-my $sub = $pp->compile_strings($template, $subtemplate);
+my $sub = $pp->compile($template, $subtemplate);
 is(ref $sub, 'CODE', "compiled template"); # test 8
 
 my $text = $sub->([1, 2]);
@@ -102,7 +102,7 @@ $template = <<'EOQ';
 EOQ
 
 $pp = Template::Twostep->new(command_start => '/*', command_end => '*/');
-$sub = $pp->compile_strings($template);
+$sub = $pp->compile($template);
 $text = $sub->({x => 3});
 
 is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 10
@@ -116,7 +116,7 @@ $name $sep $phone
 #endfor
 EOQ
 
-$sub = Template::Twostep->compile_strings($template);
+$sub = Template::Twostep->compile($template);
 my $data = {sep => ':', list => [{name => 'Ann', phone => '4444'},
                                  {name => 'Joe', phone => '5555'}]};
 
@@ -140,7 +140,7 @@ $a $b
 $b
 EOQ
 
-$sub = Template::Twostep->compile_strings($template);
+$sub = Template::Twostep->compile($template);
 $data = {a=> 1, b => 2, hash => {a => 10, b => 20}};
 
 $text = $sub->($data);
@@ -164,7 +164,7 @@ $count
 go
 EOQ
 
-$sub = Template::Twostep->compile_strings($template);
+$sub = Template::Twostep->compile($template);
 $data = {count => 3};
 
 $text = $sub->($data);
@@ -191,7 +191,7 @@ $template = <<'EOQ';
 #endif
 EOQ
 
-$sub = Template::Twostep->compile_strings($template);
+$sub = Template::Twostep->compile($template);
 
 $data = {x => 1};
 $text = $sub->($data);
@@ -246,7 +246,7 @@ $fd = IO::File->new($subtemplate_file, 'w');
 print $fd $subtemplate;
 close $fd;
 
-$sub = Template::Twostep->compile_files($template_file, $subtemplate_file);
+$sub = Template::Twostep->compile($template_file, $subtemplate_file);
 
 $data = [{name => 'Ann', phone => 4444},
          {name => 'Joe', phone => 5555}];

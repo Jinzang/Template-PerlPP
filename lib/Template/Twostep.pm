@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.75";
+our $VERSION = "0.77";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -29,7 +29,40 @@ sub new {
 #----------------------------------------------------------------------
 # Compile a template into a subroutine which when called fills itself
 
-sub compile_code {
+sub compile {
+    my ($pkg, @templates) = @_;
+    my $self = ref $pkg ? $pkg : $pkg->new();
+
+    # Template precedes subtemplate, which precedes subsubtemplate
+
+    my @block;
+    my $sections = {};
+    while (my $template = pop(@templates)) {
+        # If a template contains a newline, it is a string,
+        # if not, it is a filename
+        
+        my @lines;
+        if ($template =~ /\n/) {
+            @lines = map {"$_\n"} split(/\n/, $template);
+
+        } else {
+            my $fd = IO::File->new($template, 'r');
+            die "Couldn't read $template: $!\n" unless $fd;
+    
+            @lines = <$fd>;
+            close $fd;
+        }
+
+        @block = $self->parse_block($sections, \@lines, '');
+    }
+
+    return $self->construct_code(\@block);
+}
+
+#----------------------------------------------------------------------
+# Construct a subroutine from the code embedded in the template
+
+sub construct_code {
     my ($self, $lines) = @_;
 
     my $code = <<'EOQ';
@@ -50,49 +83,6 @@ EOQ
     my $sub = eval ($code);
     die $@ unless $sub;
     return $sub;
-}
-
-#----------------------------------------------------------------------
-# Compile a list of template files
-
-sub compile_files {
-    my ($pkg, @templates) = @_;
-    my $self = ref $pkg ? $pkg : $pkg->new();
-
-    # Template precedes subtemplate, which precedes subsubtemplate
-
-    my @block;
-    my $sections = {};
-    while (my $filename = pop(@templates)) {
-        my $fd = IO::File->new($filename, 'r');
-        die "Couldn't read $filename: $!\n" unless $fd;
-
-        my @lines = <$fd>;
-        close $fd;
-
-        @block = $self->parse_block($sections, \@lines, '');
-    }
-
-    return $self->compile_code(\@block);
-}
-
-#----------------------------------------------------------------------
-# Compile a list of templates contained in strings
-
-sub compile_strings {
-    my ($pkg, @templates) = @_;
-    my $self = ref $pkg ? $pkg : $pkg->new();
-
-    # Template precedes subtemplate, which precedes subsubtemplate
-
-    my @block;
-    my $sections = {};
-    foreach my $template (reverse @templates) {
-        my @lines = map {"$_\n"} split(/\n/, $template);
-        @block = $self->parse_block($sections, \@lines, '');
-    }
-
-    return $self->compile_code(\@block);
 }
 
 #----------------------------------------------------------------------
@@ -434,10 +424,10 @@ array passed to the subroutine.
 
 =head1 METHODS
 
-This three module has three public methods. The first, new, changes the module
-defaults. Compile_files and compile_strings generate a subroutine from one or more
-templates. You then call this subroutine with a reference to the data you want
-to substitute into the template to produce output.
+This three module has two public methods. The first, new, changes the module
+defaults. Compile generates a subroutine from one or more templates. You then
+call this subroutine with a reference to the data you want to substitute into
+the template to produce output.
 
 Using subtemplates along with a template allows you to place the common design
 elements in the template. You indicate where to replace parts of the template
@@ -456,17 +446,14 @@ All commands end at the end of line. However, you may widh to place commends
 inside comments and comments may require a closing string. By setting
 command_end, the closing string will be stripped from the end of the string.
 
-=item $sub = $obj->compile_strings($template, $subtemplate);
+=item $sub = $obj->compile($template, $subtemplate);
 
 Generate a subroutine used to render data from a template and optionally one or
 more subtemplates. It can be invoked by an object created by a call to new, or
 you can invoke it using the package name (Template::Twostep), in which case it
-will first call new for you.
-
-=item $sub = $obj->compile_files($template_file, $subtemplate_file);
-
-Like compile_strings, only the templates are read from the file names passed as
-its arguments.
+will first call new for you. If the template string does not contain a newline,
+the method assumes it is a filename and the method reads the template from that
+file.
 
 =back
 
