@@ -370,9 +370,7 @@ Template::Twostep - Compile templates into a subroutine
 
     use Template::Twostep;
     my $tt = Template::Twostep->new;
-    my $sub = $tt->compile_files($tenplate_name, $subtemplate_name);
-    # or
-    $sub = $tt->compile_strings($template, $subtemplate);
+    $sub = $tt->compile($template, $subtemplate);
     my $output = $sub->($hash);
 
 =head1 DESCRIPTION
