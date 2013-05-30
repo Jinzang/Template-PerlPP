@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.77";
+our $VERSION = "0.78";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -18,7 +18,10 @@ sub new {
     my $parameters = $pkg->parameters();
     my %self = (%$parameters, %config);
 
+    $self{stack} = [];
+    
     $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
+    
     $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
     $self{command_end_pattern} = '\s*' . $self{command_end_pattern}
                 if length $self{command_end};
@@ -67,7 +70,7 @@ sub construct_code {
 
     my $code = <<'EOQ';
 sub {
-my $hash = Template::Hashlist->new (@_);
+$self->push_stack(@_);
 my $text = '';
 EOQ
 
@@ -92,7 +95,7 @@ sub encode {
     my ($self, $value) = @_;
 
     if (defined $value) {
-        my $pre = '{$hash->fetch(\'';
+        my $pre = '{$self->fetch_stack(\'';
         my $post = '\')}';
         $value =~ s/(?<!\\)([\$\@\%])(\w+)/$1$pre$2$post/g;
 
@@ -104,6 +107,20 @@ sub encode {
 }
 
 #----------------------------------------------------------------------
+# Find and retrieve a value from the hash stack
+
+sub fetch_stack {
+    my ($self, $name) = @_;
+
+    for my $hash (@{$self->{stack}}) {
+        return $hash->{$name} if exists $hash->{$name};
+    }
+
+    my $value = '';
+    return \$value;
+}
+
+#----------------------------------------------------------------------
 # Get the translation of a template command
 
 sub get_command {
@@ -111,8 +128,8 @@ sub get_command {
 
     my $commands = {
                     do => "%%;",
-                    for => "foreach (%%) {\n\$hash->push(\$_);",
-                	endfor => "\$hash->pop();\n}",
+                    for => "foreach (%%) {\n\$self->push_stack(\$_);",
+                	endfor => "\$self->pop_stack();\n}",
                     if => "if (%%) {",
                     elsif => "} elsif (%%) {",
                     else => "} else {",
@@ -120,8 +137,8 @@ sub get_command {
                     set => \&set,
                     while => "while (%%) {",
                     endwhile => "}",
-                	with => "\$hash->push(\\%%);",
-                    endwith => "\$hash->pop();",
+                	with => "\$self->push_stack(\\%%);",
+                    endwith => "\$self->pop_stack();",
                     };
 
     return $commands->{$cmd};
@@ -145,6 +162,7 @@ sub parameters {
     my $parameters = {
                       command_start => '#',
                       command_end => '',
+                      escape => '',
                       };
 
     return $parameters;
@@ -257,6 +275,45 @@ sub parse_command {
 }
 
 #----------------------------------------------------------------------
+# Remove hash pushed on the stack
+
+sub pop_stack {
+    my ($self) = @_;
+    return shift (@{$self->{stack}});
+}
+
+#----------------------------------------------------------------------
+# Push one or more hashes on the stack 
+
+sub push_stack {
+    my ($self, @hash) = @_;
+    
+    foreach my $hash (@hash) {
+        my $newhash = {};
+        my $ref = ref ($hash);
+        if (! $ref) {
+            $newhash->{data} = \$hash;
+    
+        } elsif ($ref ne 'HASH') {
+            $newhash->{data} = $hash;
+    
+        } else {
+            while (my ($name, $entry) = each %$hash) {
+                if (ref $entry) {
+                    $newhash->{$name} = $entry;
+                } else {
+                    $newhash->{$name} = \$entry;
+                }
+            }
+        }
+    
+        unshift (@{$self->{stack}}, $newhash);
+    }
+    
+    return;
+}
+
+#----------------------------------------------------------------------
 # Generate code for the set command, which stores results in the hashlist
 
 sub set {
@@ -265,102 +322,35 @@ sub set {
     my ($var, $expr) = split (/\s*=\s*/, $arg, 2);
     $expr = $self->encode ($expr);
 
-    return "\$hash->store(\'$var\', ($expr));\n";
-}
-
-#----------------------------------------------------------------------
-# The hashlist stores variables passed to the fill routine
-
-package Template::Hashlist;
-
-sub new {
-    my ($pkg, @hash) = @_;
-
-    my $self = bless ([], $pkg);
-    foreach my $hash (@hash) {
-        $hash = {data => $hash} unless ref $hash eq 'HASH';
-        $self->push ($hash);
-    }
-
-    return $self;
-}
-
-#----------------------------------------------------------------------
-# Find and retrieve a value from the hash list
-
-sub fetch {
-    my ($self, $name) = @_;
-
-    for my $hash (@$self) {
-        return $hash->{$name} if exists $hash->{$name};
-    }
-
-    my $value = '';
-    return \$value;
-}
-
-#----------------------------------------------------------------------
-# Remove hashes pushed on the list by the for command
-
-sub pop {
-    my ($self) = @_;
-    return shift (@$self);
-}
-
-#----------------------------------------------------------------------
-# Push a hash on the list of hashes, used in for loops
-
-sub push {
-    my ($self, $hash) = @_;
-    return unless defined $hash;
-
-    my $newhash = {};
-    my $ref = ref ($hash);
-    if (! $ref) {
-        $newhash->{data} = \$hash;
-
-    } elsif ($ref ne 'HASH') {
-        $newhash->{data} = $hash;
-
-    } else {
-        while (my ($name, $entry) = each %$hash) {
-            if (ref $entry) {
-                $newhash->{$name} = $entry;
-            } else {
-                $newhash->{$name} = \$entry;
-            }
-        }
-    }
-
-    unshift (@$self, $newhash);
+    return "\$self->store_stack(\'$var\', ($expr));\n";
 }
 
 #----------------------------------------------------------------------
 # Store a variable in the hashlist, used by set
 
-sub store {
+sub store_stack {
     my ($self, $var, @val) = @_;
 
     my ($sigil, $name) = $var =~ /([\$\@\%])(\w+)/;
     die "Unrecognized variable type: $name" unless defined $sigil;
 
     my $i;
-    for ($i = 0; $i < @$self; $i ++) {
-        last if exists $self->[$i]{$name};
+    for ($i = 0; $i < @{$self->{stack}}; $i ++) {
+        last if exists $self->{stack}[$i]{$name};
     }
 
-    $i = 0 unless $i < @$self;
+    $i = 0 unless $i < @{$self->{stack}};
 
     if ($sigil eq '$') {
         my $val = @val == 1 ? $val[0] : @val;
-        $self->[$i]{$name} = \$val;
+        $self->{stack}[$i]{$name} = \$val;
 
     } elsif ($sigil eq '@') {
-        $self->[$i]{$name} = \@val;
+        $self->{stack}[$i]{$name} = \@val;
 
     } elsif ($sigil eq '%') {
         my %val = @val;
-        $self->[$i]{$name} = \%val;
+        $self->{stack}[$i]{$name} = \%val;
     }
 
     return;
