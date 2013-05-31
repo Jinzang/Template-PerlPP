@@ -18,15 +18,10 @@ sub new {
     my $parameters = $pkg->parameters();
     my %self = (%$parameters, %config);
 
-    $self{stack} = [];
+    my $self = bless(\%self, $pkg);
+    $self->set_patterns();
     
-    $self{command_start_pattern} = '^\s*' . quotemeta($self{command_start});
-    
-    $self{command_end_pattern} = quotemeta($self{command_end}) . '\s*$';
-    $self{command_end_pattern} = '\s*' . $self{command_end_pattern}
-                if length $self{command_end};
-
-    return bless(\%self, $pkg);
+    return $self;
 }
 
 #----------------------------------------------------------------------
@@ -70,6 +65,7 @@ sub construct_code {
 
     my $code = <<'EOQ';
 sub {
+$self->init_stack();
 $self->push_stack(@_);
 my $text = '';
 EOQ
@@ -142,6 +138,16 @@ sub get_command {
                     };
 
     return $commands->{$cmd};
+}
+
+#----------------------------------------------------------------------
+# Initialize the data stack
+
+sub init_stack {
+    my ($self) = @_;
+    
+    $self->{stack} = [];
+    return;
 }
 
 #----------------------------------------------------------------------
@@ -323,6 +329,22 @@ sub set {
     $expr = $self->encode ($expr);
 
     return "\$self->store_stack(\'$var\', ($expr));\n";
+}
+
+#----------------------------------------------------------------------
+# Set the regular expression patterns used to match a command
+
+sub set_patterns {
+    my ($self) = @_;
+
+    $self->{command_start_pattern} = '^\s*' . quotemeta($self->{command_start});
+    
+    $self->{command_end_pattern} = quotemeta($self->{command_end}) . '\s*$';
+
+    $self->{command_end_pattern} = '\s*' . $self->{command_end_pattern}
+                if length $self->{command_end};
+
+    return;
 }
 
 #----------------------------------------------------------------------
