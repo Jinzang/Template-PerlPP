@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 
-use Test::More tests => 17;
+use Test::More tests => 21;
 
 #----------------------------------------------------------------------
 # Load package
@@ -262,3 +262,26 @@ Joe 5555
 EOQ
 
 is($text, $text_ok, "Parse files"); # test 17
+
+#----------------------------------------------------------------------
+# Test escaping
+
+
+my $result = $pp->escape('< & >');
+is($result, '&#60; &#38; &#62;', "Escape"); # test 18
+
+#----------------------------------------------------------------------
+# Test render
+
+$data = \'<>';
+$result = $pp->render($data);
+is($result, '&#60;&#62;', "Rendar scalar"); # test 19
+
+$data = [1, 2];
+$result = $pp->render($data);
+is($result, "<ul>\n<li>1</li>\n<li>2</li>\n</ul>", "Render array"); # test 20
+
+$data = {a => 1, b => 2};
+$result = $pp->render($data);
+is($result, "<dl>\n<dt>a</dt>\n<dd>1</dd>\n<dt>b</dt>\n<dd>2</dd>\n</dl>",
+   "Render hash"); # test 21

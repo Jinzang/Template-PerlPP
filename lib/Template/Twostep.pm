@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.78";
+our $VERSION = "0.79";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -126,7 +126,7 @@ sub encode_text {
 sub escape {
     my ($self, $data) = @_;
     
-    $data =~ s/[<>&]/'&#' . ord($1) . ';'/ge;
+    $data =~ s/([<>&])/'&#' . ord($1) . ';'/ge;
     return $data;
 }
 
@@ -386,7 +386,7 @@ sub render {
         $result = join("\n", '<ul>', @result, '</ul>');
 
     } elsif ($ref eq 'SCALAR') {
-        $result = $self->escape($$data)
+        $result = $self->escape($$data);
 
     } else  {
         $result = $self->escape("$data");
