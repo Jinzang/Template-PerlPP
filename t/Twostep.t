@@ -26,21 +26,21 @@ can_ok($pp, qw(new compile)); # test 2
 # Test parse_block
 
 my $template = <<'EOQ';
-#section header
+<!-- section header -->
 Header
-#endsection
-#set $i = 0
-#for @data
-  #set $i = $i + 1
-  #if $i % 2
+<!-- endsection -->
+<!-- set $i = 0 -->
+<!-- for @data -->
+  <!-- set $i = $i + 1 -->
+  <!-- if $i % 2 -->
 Even line
-  #else
+  <!-- else -->
 Odd line
-  #endif
-#endfor
-#section footer
+  <!-- endif -->
+<!-- endfor -->
+<!-- section footer -->
 Footer
-#endsection
+<!-- endsection -->
 EOQ
 
 my $sections = {};
@@ -57,13 +57,13 @@ is_deeply($sections->{footer}, ["Footer\n"],
           "Right value in footer from parse_block"); # test 5
 
 my $subtemplate = <<'EOQ';
-#section header
+<!-- section header -->
 Another Header
-#endsection
+<!-- endsection -->
 Another Body
-#section footer
+<!-- section footer -->
 Another Footer
-#endsection
+<!-- endsection -->
 EOQ
 
 @lines = map {"$_\n"} split(/\n/, $template);
@@ -111,9 +111,9 @@ is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 10
 # Test for loop
 
 $template = <<'EOQ';
-#for @list
+<!-- for @list -->
 $name $sep $phone
-#endfor
+<!-- endfor -->
 EOQ
 
 $sub = Template::Twostep->compile($template);
@@ -134,9 +134,9 @@ is($text, $text_ok, "For loop"); # test 11
 
 $template = <<'EOQ';
 $a
-#with %hash
+<!-- with %hash -->
 $a $b
-#endwith
+<!-- endwith -->
 $b
 EOQ
 
@@ -157,10 +157,10 @@ is($text, $text_ok, "With block"); # test 12
 # Test while loop
 
 $template = <<'EOQ';
-#while $count
+<!-- while $count -->
 $count
-#set $count = $count - 1
-#endwhile
+<!-- set $count = $count - 1 -->
+<!-- endwhile -->
 go
 EOQ
 
@@ -182,13 +182,13 @@ is($text, $text_ok, "While loop"); # test 13
 # Test if blocks
 
 $template = <<'EOQ';
-#if $x == 1
+<!-- if $x == 1 -->
 \$x is $x (one)
-#elsif $x  == 2
+<!-- elsif $x  == 2 -->
 \$x is $x (two)
-#else
+<!-- else -->
 \$x is unknown
-#endif
+<!-- endif -->
 EOQ
 
 $sub = Template::Twostep->compile($template);
@@ -212,28 +212,28 @@ system("/bin/rm -rf $bin/../test");
 mkdir "$bin/../test";
 
 $template = <<'EOQ';
-#section header
+<!-- section header -->
 Dummy Header
-#endsection
-#for @data
+<!-- endsection -->
+<!-- for @data -->
 $name $phone
-#endfor
-#section footer
+<!-- endfor -->
+<!-- section footer -->
 Dummy Footer
-#endsection
+<!-- endsection -->
 EOQ
 
 $subtemplate = <<'EOQ';
-#section header
+<!-- section header -->
 Phone List
 ----
-#endsection
+<!-- endsection -->
 
-#section footer
+<!-- section footer -->
 ----
-#set $num = @data
+<!-- set $num = @data -->
 $num people
-#endsection
+<!-- endsection -->
 EOQ
 
 my $template_file = "$bin/../test/template.txt";

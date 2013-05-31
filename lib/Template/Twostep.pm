@@ -87,7 +87,7 @@ EOQ
 #----------------------------------------------------------------------
 # Replace variable references with hashlist fetches
 
-sub encode {
+sub encode_expression {
     my ($self, $value) = @_;
 
     if (defined $value) {
@@ -103,6 +103,34 @@ sub encode {
 }
 
 #----------------------------------------------------------------------
+# Replace variable references with hashlist fetches
+
+sub encode_text {
+    my ($self, $value) = @_;
+
+    if (defined $value) {
+        my $pre = '${$self->fill_in(\'';
+        my $post = '\')}';
+        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$pre$2$post/g;
+
+    } else {
+        $value = '';
+    }
+
+    return $value;
+}
+
+#----------------------------------------------------------------------
+# Escape a set of characters
+
+sub escape {
+    my ($self, $data) = @_;
+    
+    $data =~ s/[<>&]/'&#' . ord($1) . ';'/ge;
+    return $data;
+}
+
+#----------------------------------------------------------------------
 # Find and retrieve a value from the hash stack
 
 sub fetch_stack {
@@ -114,6 +142,18 @@ sub fetch_stack {
 
     my $value = '';
     return \$value;
+}
+
+#----------------------------------------------------------------------
+# Return a value to fill in a template
+
+sub fill_in {
+    my ($self, $name) = @_;
+
+    my $data = $self->fetch_stack($name);
+    my $result = $self->render($data);
+    
+    return \$result;
 }
 
 #----------------------------------------------------------------------
@@ -166,9 +206,8 @@ sub parameters {
     my ($pkg) = @_;
 
     my $parameters = {
-                      command_start => '#',
-                      command_end => '',
-                      escape => '',
+                      command_start => '<!-- ',
+                      command_end => '-->',
                       };
 
     return $parameters;
@@ -242,7 +281,7 @@ sub parse_code {
 
             my $ref = ref ($command);
             if (! $ref) {
-                $arg = $self->encode($arg);
+                $arg = $self->encode_expression($arg);
                 $command =~ s/%%/$arg/;
                 $code .= "$command\n";
 
@@ -254,7 +293,7 @@ sub parse_code {
             }
 
         } else {
-            $stash .= $self->encode($line);
+            $stash .= $self->encode_text($line);
         }
     }
 
@@ -320,13 +359,51 @@ sub push_stack {
 }
 
 #----------------------------------------------------------------------
+# Render a data structure as html
+
+sub render {
+    my ($self, $data) = @_;
+    
+    my $result;
+    my $ref = ref $data;
+    
+    if ($ref eq 'HASH') {
+        my @result;
+        foreach my $key (sort keys %$data) {
+            my $val = $self->render($data->{$key});
+            push(@result, "<dt>$key</dt>", "<dd>$val</dd>");
+        }
+
+        $result = join("\n", '<dl>', @result, '</dl>');
+
+    } elsif ($ref eq 'ARRAY') {
+        my @result;
+        foreach my $datum (@$data) {
+            my $val = $self->render($datum);
+            push(@result, "<li>$val</li>");
+        }
+
+        $result = join("\n", '<ul>', @result, '</ul>');
+
+    } elsif ($ref eq 'SCALAR') {
+        $result = $self->escape($$data)
+
+    } else  {
+        $result = $self->escape("$data");
+    }
+
+
+    return $result;
+}    
+
+#----------------------------------------------------------------------
 # Generate code for the set command, which stores results in the hashlist
 
 sub set {
     my ($self, $arg) = @_;
 
     my ($var, $expr) = split (/\s*=\s*/, $arg, 2);
-    $expr = $self->encode ($expr);
+    $expr = $self->encode_expression($expr);
 
     return "\$self->store_stack(\'$var\', ($expr));\n";
 }
