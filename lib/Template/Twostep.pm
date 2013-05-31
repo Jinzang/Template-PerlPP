@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.79";
+our $VERSION = "0.80";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -490,7 +490,7 @@ template modules, which can be important for some data formats.
 
 The template format is line oriented. Commands occupy a single line and
 continue to the end of line. Commands start with a string, which is
-configurable, but is a sharp character (C<#>) by default. The command start
+configurable, but is the start of an html comment by default. The command start
 string may be preceded by whitespace. If a command is a block command, it is
 terminated by the word "end" followed by the command name. For example, the for
 command is terminated by an endfor command and the if command by an endif
@@ -525,7 +525,7 @@ corresponding block in the subtemplate.
 
 =over 4
 
-=item $obj = Template::Twostep->new(command_start => '#', command_end => '');
+=item $obj = Template::Twostep->new(command_start => '::', command_end => '');
 
 Create a new parser. The configuration allows you to set the string which starts
 a command (command_start) and the string which ends a command (command_end).
@@ -546,11 +546,11 @@ file.
 
 =head1 TEMPLATE SYNTAX
 
-If the first non-white char on a line is the coomand start string, by default a
-sharp character (C<#>). the line is interpreted as a command. The command name
-continues up to the first white space character. The text following the initial
-span of whitespace is the command argument. The argument continues up to the end
-of the line.
+If the first non-white char on a line is the coomand start string, the line is
+interpreted as a command. The command name continues up to the first white space
+character. The text following the initial span of whitespace is the command
+argument. The argument continues up to the command end string, or if this is
+emoty, to the end of the line.
 
 Variables in the template have the same format as ordinary Perl variables,
 a string of word characters starting with a sigil character. for example,
@@ -578,11 +578,11 @@ the expression in the C<if> command is true and the text after the C<else> is
 included if it is false. You can also place an C<elsif> command in the C<if>
 block, which includes the following text if its expression is true.
 
-    #if $highlight eq 'y'
+    <!-- if $highlight eq 'y' -->
     <em>$text</em>
-    #else
+    <!-- else -->
     $text
-    #endif
+    <!-- endif -->
 
 =item for
 
@@ -594,10 +594,10 @@ is accesible. This is especially useful for displaying lists of hashes. For
 example, suppose the data field name PHONELIST points to an array. This array is
 a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
 
-    #for @PHONELIST
+    <!-- for @PHONELIST -->
     <p>$NAME<br>
     $PHONE</p>
-    #endfor
+    <!-- endfor -->
 
 displays the entire phone list.
 
@@ -607,15 +607,15 @@ If a template contains a section, the text until the endsection command will be
 replaced by the section block with the same name one the subtemplates. For
 example, if the main template has the code
 
-    #section footer
+    <!-- section footer -->
     <div></div>
-    #endsection
+    <!-- endsection -->
 
 and the subtemplate has the lines
 
-    #section footer
+    <!-- section footer -->
     <div>This template is copyright with a Creative Commons License.</div>
-    #endsection
+    <!-- endsection -->
 
 The text will be copied from a section in the subtemplate into a section of the
 same name in the template. If there is no block with the same name, the text is
@@ -627,29 +627,29 @@ Adds a new variable or updates the value of an existing variable. The argument
 following the command name looks like any Perl assignment statement minus the
 trailing semicolon. For example,
 
-    #set $link = "<a href=\"$url\">$title</a>"
+    <!-- set $link = "<a href=\"$url\">$title</a>" -->
 
 =item while
 
 Expand the text between the C<while> and C<endwhile> as long as the
 expression following the C<while> is true.
 
-    #set $i = 10
+    <!-- set $i = 10 -->
     <p>Countdown ...<br>
-    #while $i >= 0
+    <!-- while $i >= 0 -->
     $i<br>
-    #set $i = $i - 1
-    #endwhile
+    <!-- set $i = $i - 1 -->
+    <!-- endwhile -->
 
 =item with
 
 Lists with a hash can be accessed using the for command. Hashes within a hash
 are accessed using the with command. For example:
 
-    #with %address
+    <!-- with %address -->
     <p><i>$street<br />
     $city, $state $zip</i></p.
-    #endwith
+    <!-- endwith -->
 
 =back
 
