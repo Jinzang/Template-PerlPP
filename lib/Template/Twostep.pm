@@ -367,14 +367,8 @@ sub render {
     my $result;
     my $ref = ref $data;
     
-    if ($ref eq 'HASH') {
-        my @result;
-        foreach my $key (sort keys %$data) {
-            my $val = $self->render($data->{$key});
-            push(@result, "<dt>$key</dt>", "<dd>$val</dd>");
-        }
-
-        $result = join("\n", '<dl>', @result, '</dl>');
+    if ($ref eq 'SCALAR') {
+        $result = $self->escape($$data);
 
     } elsif ($ref eq 'ARRAY') {
         my @result;
@@ -385,8 +379,14 @@ sub render {
 
         $result = join("\n", '<ul>', @result, '</ul>');
 
-    } elsif ($ref eq 'SCALAR') {
-        $result = $self->escape($$data);
+    } elsif ($ref eq 'HASH') {
+        my @result;
+        foreach my $key (sort keys %$data) {
+            my $val = $self->render($data->{$key});
+            push(@result, "<dt>$key</dt>", "<dd>$val</dd>");
+        }
+
+        $result = join("\n", '<dl>', @result, '</dl>');
 
     } else  {
         $result = $self->escape("$data");
