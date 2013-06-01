@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 30;
 
 #----------------------------------------------------------------------
 # Load package
@@ -21,6 +21,59 @@ require Template::Twostep;
 my $pp = Template::Twostep->new();
 isa_ok($pp, "Template::Twostep"); # test 1
 can_ok($pp, qw(new compile)); # test 2
+
+#----------------------------------------------------------------------
+# Test escaping
+
+
+my $result = $pp->escape('< & >');
+is($result, '&#60; &#38; &#62;', "Escape"); # test 3
+
+#----------------------------------------------------------------------
+# Test render
+
+my $data = \'<>';
+$result = $pp->render($data);
+is($result, '&#60;&#62;', "Rendar scalar"); # test 4
+
+$data = [1, 2];
+$result = $pp->render($data);
+is($result, "<ul>\n<li>1</li>\n<li>2</li>\n</ul>", "Render array"); # test 5
+
+$data = {a => 1, b => 2};
+$result = $pp->render($data);
+is($result, "<dl>\n<dt>a</dt>\n<dd>1</dd>\n<dt>b</dt>\n<dd>2</dd>\n</dl>",
+   "Render hash"); # test 6
+
+#----------------------------------------------------------------------
+# Test type coercion
+
+$data = $pp->coerce('$', 2);
+is($$data, 2, "Coerce scalar to scalar"); # test 7
+
+$data = $pp->coerce('@', 2);
+is_deeply($data, [2], "Coerce scalar to array"); # test 8
+
+$data = $pp->coerce('%', 2);
+is($data, undef, "Coerce scalar to hash"); # test 9
+
+$data = $pp->coerce('$', [1, 3]);
+is($$data, 2, "Coerce array to scalar"); # test 10
+
+$data = $pp->coerce('@', [1, 3]);
+is_deeply($data, [1, 3], "Coerce array to array"); # test 11
+
+$data = $pp->coerce('%', [1, 3]);
+is_deeply($data, {1 => 3}, "Coerce array to hash"); # test 12
+
+$data = $pp->coerce('$', {1 => 3});
+is($$data, 2, "Coerce hash to scalar"); # test 13
+
+$data = $pp->coerce('@', {1 => 3});
+is_deeply($data, [1, 3], "Coerce hash to array"); # test 14
+
+$data = $pp->coerce('%', {1 => 3});
+is_deeply($data, {1 => 3}, "Coerce hash to hash"); # test 15
 
 #----------------------------------------------------------------------
 # Test parse_block
@@ -50,11 +103,11 @@ my @ok = grep {$_ !~ /section/} @lines;
 my @block = $pp->parse_block($sections, \@lines, '');
 my @sections = sort keys %$sections;
 
-is_deeply(\@block, \@ok, "All lines returned from parse_block"); # test 3
+is_deeply(\@block, \@ok, "All lines returned from parse_block"); # test 16
 is_deeply(\@sections, [qw(footer header)],
-          "All sections returned from parse_block"); #test 4
+          "All sections returned from parse_block"); #test 17
 is_deeply($sections->{footer}, ["Footer\n"],
-          "Right value in footer from parse_block"); # test 5
+          "Right value in footer from parse_block"); # test 18
 
 my $subtemplate = <<'EOQ';
 <!-- section header -->
@@ -76,12 +129,12 @@ $sections = {};
 @block = $pp->parse_block($sections, \@sublines, '');
 @block = $pp->parse_block($sections, \@lines, '');
 
-is_deeply(\@block, \@ok, "Template and subtemplate with parse_block"); # test 6
+is_deeply(\@block, \@ok, "Template and subtemplate with parse_block"); # test 19
 is_deeply($sections->{header}, ["Another Header\n"],
-          "Right value in header for template & subtemplate"); # test 7
+          "Right value in header for template & subtemplate"); # test 20
 
 my $sub = $pp->compile($template, $subtemplate);
-is(ref $sub, 'CODE', "compiled template"); # test 8
+is(ref $sub, 'CODE', "compiled template"); # test 21
 
 my $text = $sub->([1, 2]);
 my $text_ok = <<'EOQ';
@@ -91,7 +144,7 @@ Odd line
 Another Footer
 EOQ
 
-is($text, $text_ok, "Run compiled template"); # test 9
+is($text, $text_ok, "Run compiled template"); # test 22
 
 #----------------------------------------------------------------------
 # Test configurable command start and end
@@ -105,7 +158,7 @@ $pp = Template::Twostep->new(command_start => '/*', command_end => '*/');
 $sub = $pp->compile($template);
 $text = $sub->({x => 3});
 
-is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 10
+is($text, "2 * 3 = 6\n", "Configurable start and end"); # test 23
 
 #----------------------------------------------------------------------
 # Test for loop
@@ -117,8 +170,8 @@ $name $sep $phone
 EOQ
 
 $sub = Template::Twostep->compile($template);
-my $data = {sep => ':', list => [{name => 'Ann', phone => '4444'},
-                                 {name => 'Joe', phone => '5555'}]};
+$data = {sep => ':', list => [{name => 'Ann', phone => '4444'},
+                              {name => 'Joe', phone => '5555'}]};
 
 $text = $sub->($data);
 
@@ -127,7 +180,7 @@ Ann : 4444
 Joe : 5555
 EOQ
 
-is($text, $text_ok, "For loop"); # test 11
+is($text, $text_ok, "For loop"); # test 24
 
 #----------------------------------------------------------------------
 # Test with block
@@ -151,7 +204,7 @@ $text_ok = <<'EOQ';
 2
 EOQ
 
-is($text, $text_ok, "With block"); # test 12
+is($text, $text_ok, "With block"); # test 25
 
 #----------------------------------------------------------------------
 # Test while loop
@@ -176,7 +229,7 @@ $text_ok = <<'EOQ';
 go
 EOQ
 
-is($text, $text_ok, "While loop"); # test 13
+is($text, $text_ok, "While loop"); # test 26
 
 #----------------------------------------------------------------------
 # Test if blocks
@@ -195,15 +248,15 @@ $sub = Template::Twostep->compile($template);
 
 $data = {x => 1};
 $text = $sub->($data);
-is($text, "\$x is 1 (one)\n", "If block"); # test 14
+is($text, "\$x is 1 (one)\n", "If block"); # test 27
 
 $data = {x => 2};
 $text = $sub->($data);
-is($text, "\$x is 2 (two)\n", "Elsif block"); # test 15
+is($text, "\$x is 2 (two)\n", "Elsif block"); # test 28
 
 $data = {x => 3};
 $text = $sub->($data);
-is($text, "\$x is unknown\n", "Elsif block"); # test 16
+is($text, "\$x is unknown\n", "Elsif block"); # test 29
 
 #----------------------------------------------------------------------
 # Create test directory
@@ -261,27 +314,5 @@ Joe 5555
 2 people
 EOQ
 
-is($text, $text_ok, "Parse files"); # test 17
+is($text, $text_ok, "Parse files"); # test 30
 
-#----------------------------------------------------------------------
-# Test escaping
-
-
-my $result = $pp->escape('< & >');
-is($result, '&#60; &#38; &#62;', "Escape"); # test 18
-
-#----------------------------------------------------------------------
-# Test render
-
-$data = \'<>';
-$result = $pp->render($data);
-is($result, '&#60;&#62;', "Rendar scalar"); # test 19
-
-$data = [1, 2];
-$result = $pp->render($data);
-is($result, "<ul>\n<li>1</li>\n<li>2</li>\n</ul>", "Render array"); # test 20
-
-$data = {a => 1, b => 2};
-$result = $pp->render($data);
-is($result, "<dl>\n<dt>a</dt>\n<dd>1</dd>\n<dt>b</dt>\n<dd>2</dd>\n</dl>",
-   "Render hash"); # test 21

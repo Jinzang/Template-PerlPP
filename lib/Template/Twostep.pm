@@ -37,12 +37,12 @@ sub coerce {
         if (! $ref) {
             $data = \$value;
         } elsif ($ref eq 'ARRAY') {
-            $data = @$value;
-            $data = \$data;
+            my $val = @$value;
+            $data = \$val;
         } elsif ($ref eq 'HASH') {
             my @data = %$value;
-            $data = @data;
-            $data = \$data;
+            my $val = @data;
+            $data = \$val;
         }
         
     } elsif ($sigil eq '@') {
@@ -56,7 +56,7 @@ sub coerce {
         }
 
     } elsif ($sigil eq '%') {
-        if ($ref eq 'ARRAY' && @$data % 2 == 0) {
+        if ($ref eq 'ARRAY' && @$value % 2 == 0) {
             my %data = @$value;
             $data = \%data;
         } elsif ($ref eq 'HASH') {
