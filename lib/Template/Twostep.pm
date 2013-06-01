@@ -25,6 +25,49 @@ sub new {
 }
 
 #----------------------------------------------------------------------
+# Coerce a value to the type indicated by the sigil
+
+sub coerce {
+    my ($self, $sigil, $value) = @_;
+
+    my $data;
+    my $ref = ref $value;
+
+    if ($sigil eq '$') {
+        if (! $ref) {
+            $data = \$value;
+        } elsif ($ref eq 'ARRAY') {
+            $data = @$value;
+            $data = \$data;
+        } elsif ($ref eq 'HASH') {
+            my @data = %$value;
+            $data = @data;
+            $data = \$data;
+        }
+        
+    } elsif ($sigil eq '@') {
+        if (! $ref) {
+            $data = [$value];
+        } elsif ($ref eq 'ARRAY') {
+            $data = $value;
+        } elsif ($ref eq 'HASH') {
+            my @data = %$value;
+            $data = \@data;
+        }
+
+    } elsif ($sigil eq '%') {
+        if ($ref eq 'ARRAY' && @$data % 2 == 0) {
+            my %data = @$value;
+            $data = \%data;
+        } elsif ($ref eq 'HASH') {
+            $data = $value;
+        }
+    }
+    
+    return $data;
+}
+
+#----------------------------------------------------------------------
 # Compile a template into a subroutine which when called fills itself
 
 sub compile {
@@ -92,8 +135,9 @@ sub encode_expression {
 
     if (defined $value) {
         my $pre = '{$self->fetch_stack(\'';
+        my $mid = '\',\'';
         my $post = '\')}';
-        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$1$pre$2$post/g;
+        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$1$pre$1$mid$2$post/g;
 
     } else {
         $value = '';
@@ -110,8 +154,9 @@ sub encode_text {
 
     if (defined $value) {
         my $pre = '${$self->fill_in(\'';
+        my $mid = '\',\'';
         my $post = '\')}';
-        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$pre$2$post/g;
+        $value =~ s/(?<!\\)([\$\@\%])(\w+)/$pre$1$mid$2$post/g;
 
     } else {
         $value = '';
@@ -134,23 +179,29 @@ sub escape {
 # Find and retrieve a value from the hash stack
 
 sub fetch_stack {
-    my ($self, $name) = @_;
-
-    for my $hash (@{$self->{stack}}) {
-        return $hash->{$name} if exists $hash->{$name};
-    }
+    my ($self, $sigil, $name) = @_;
 
     my $value = '';
-    return \$value;
+    for my $hash (@{$self->{stack}}) {
+        if (exists $hash->{$name}) {
+            $value = $hash->{$name};
+            last;
+        }
+    }
+
+    $value = $self->coerce($sigil, $value);
+    die "Illegal type conversion: $sigil$name\n" unless defined $value;
+
+    return $value;
 }
 
 #----------------------------------------------------------------------
 # Return a value to fill in a template
 
 sub fill_in {
-    my ($self, $name) = @_;
+    my ($self, $sigil, $name) = @_;
 
-    my $data = $self->fetch_stack($name);
+    my $data = $self->fetch_stack($sigil, $name);
     my $result = $self->render($data);
     
     return \$result;
@@ -334,22 +385,11 @@ sub push_stack {
     my ($self, @hash) = @_;
     
     foreach my $hash (@hash) {
-        my $newhash = {};
-        my $ref = ref ($hash);
-        if (! $ref) {
-            $newhash->{data} = \$hash;
-    
-        } elsif ($ref ne 'HASH') {
-            $newhash->{data} = $hash;
-    
+        my $newhash;
+        if (ref $hash eq 'HASH') {
+            $newhash = $hash;   
         } else {
-            while (my ($name, $entry) = each %$hash) {
-                if (ref $entry) {
-                    $newhash->{$name} = $entry;
-                } else {
-                    $newhash->{$name} = \$entry;
-                }
-            }
+            $newhash = {data => $hash};
         }
     
         unshift (@{$self->{stack}}, $newhash);
@@ -442,7 +482,7 @@ sub store_stack {
 
     if ($sigil eq '$') {
         my $val = @val == 1 ? $val[0] : @val;
-        $self->{stack}[$i]{$name} = \$val;
+        $self->{stack}[$i]{$name} = $val;
 
     } elsif ($sigil eq '@') {
         $self->{stack}[$i]{$name} = \@val;
