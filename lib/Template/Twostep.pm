@@ -514,7 +514,7 @@ Template::Twostep - Compile templates into a subroutine
 
 =head1 DESCRIPTION
 
-This module simplifies the job of producing repetetive text output by letting
+This module simplifies the job of producing repetitive text output by letting
 you put data into a template. Templates also support the control structures in
 Perl: for and while loops, if else blocks, and some others. Creating output
 is a two step process. First you generate a subroutine from one or more
@@ -540,14 +540,14 @@ All lines may contain variables. As in Perl, variables are a sigil character
 (C<$>, C<@>, or C<&>) followed by one or more word characters. For example,
 C<$name> or C<@names>. To indicate a literal character instead of a variable,
 precede the sigil with a backslash. When you run the subroutine that this module
-generetaes, you pass it a reference to some data, which is usually a hash. The
+generates, you pass it a reference to some data, which is usually a hash. The
 subroutine replaces variables with the value in the field of the same name in
-the hash. The sigil on the variable should match the type of data contained in
-the hash field: a C<$> if it is a scalar, a C<@> if it is an array reference, or
-a C<%> if it is a hash reference. If the two disagree, you will get a run time
-error. You can pass a reference to an array instead of a hash to the subroutine
-this module generates. If you do, the template will use C<@data> to refer to the
-array passed to the subroutine.
+the hash. The sigil on the variable should usually match the type of data
+contained in the hash field: a C<$> if it is a scalar, a C<@> if it is an array
+reference, or a C<%> if it is a hash reference. If the two disagree, the code
+will coerce the data. to the type of the sigil. You can pass a reference to an
+array instead of a hash to the subroutine this module generates. If you do, the
+template will use C<@data> to refer to the array passed to the subroutine.
 
 =head1 METHODS
 
