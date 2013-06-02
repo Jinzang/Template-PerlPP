@@ -528,30 +528,28 @@ modules and you might wonder why there needs to be another. My reason for
 writing it is that it provides better control over whitespace than other
 template modules, which can be important for some data formats.
 
-The template format is line oriented. Commands occupy a single line and
-continue to the end of line. Commands start with a string, which is
-configurable, but is the start of an html comment by default. The command start
-string may be preceded by whitespace. If a command is a block command, it is
-terminated by the word "end" followed by the command name. For example, the for
-command is terminated by an endfor command and the if command by an endif
-command.
+The template format is line oriented. Commands occupy a single line and continue
+to the end of line. Commands are enclosed in html comments (<!-- -->) by
+default, but the command start and end strings are configurable via the new
+method. A command may be preceded by whitespace. If a command is a block
+command, it is terminated by the word "end" followed by the command name. For
+example, the for command is terminated by an endfor command and the if command
+by an endif command.
 
 All lines may contain variables. As in Perl, variables are a sigil character
-(C<$>, C<@>, or C<&>) followed by one or more word characters. For example,
+(C<$>, C<@>, or C<%>) followed by one or more word characters. For example,
 C<$name> or C<@names>. To indicate a literal character instead of a variable,
 precede the sigil with a backslash. When you run the subroutine that this module
 generates, you pass it a reference to some data, which is usually a hash. The
 subroutine replaces variables with the value in the field of the same name in
-the hash. The sigil on the variable should usually match the type of data
-contained in the hash field: a C<$> if it is a scalar, a C<@> if it is an array
-reference, or a C<%> if it is a hash reference. If the two disagree, the code
-will coerce the data. to the type of the sigil. You can pass a reference to an
-array instead of a hash to the subroutine this module generates. If you do, the
-template will use C<@data> to refer to the array passed to the subroutine.
+the hash. If the two disagree, the code will coerce the data. to the type of the
+sigil. You can pass a reference to an array instead of a hash to the subroutine
+this module generates. If you do, the template will use C<@data> to refer to the
+array.
 
 =head1 METHODS
 
-This three module has two public methods. The first, new, changes the module
+This module has two public methods. The first, new, changes the module
 defaults. Compile generates a subroutine from one or more templates. You then
 call this subroutine with a reference to the data you want to substitute into
 the template to produce output.
@@ -597,10 +595,20 @@ a string of word characters starting with a sigil character. for example,
 
     $SUMMARY @data %dictionary
 
-is an examplea of a macro. The subroutine this module generates will substitute
+are examples of variables. The subroutine this module generates will substitute
 values in the data it is passed for the variables. If a corresponding field is
 not found in the data, the interpolator substitutes an empty string. New
 variables can be added with the C<set> command.
+
+Arrays and hashes are rendered as unordered lists and definition lists when
+interpolating them. This is done recursively, so arbitary structures can be
+rendered. This is mostly intended for debugging, as it does not provide fine
+control over how the structures are rendered. For finer control, use the
+commands described below so that the scalar fields in the structures can be
+accessed. Scalar fields have the characters <, >, and & escaped before
+interpolating them.
+
+The following commands are supported in templates:
 
 =over 4
 
