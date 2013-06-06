@@ -20,7 +20,7 @@ sub new {
 
     my $self = bless(\%self, $pkg);
     $self->set_patterns();
-    
+
     return $self;
 }
 
@@ -31,37 +31,43 @@ sub coerce {
     my ($self, $sigil, $value) = @_;
 
     my $data;
-    my $ref = ref $value;
+    if (defined $value) {
+        my $ref = ref $value;
+    
+        if ($sigil eq '$') {
+            if (! $ref) {
+                $data = \$value;
+            } elsif ($ref eq 'ARRAY') {
+                my $val = @$value;
+                $data = \$val;
+            } elsif ($ref eq 'HASH') {
+                my @data = %$value;
+                my $val = @data;
+                $data = \$val;
+            }
+    
+        } elsif ($sigil eq '@') {
+            if (! $ref) {
+                $data = [$value];
+            } elsif ($ref eq 'ARRAY') {
+                $data = $value;
+            } elsif ($ref eq 'HASH') {
+                my @data = %$value;
+                $data = \@data;
+            }
+    
+        } elsif ($sigil eq '%') {
+            if ($ref eq 'ARRAY' && @$value % 2 == 0) {
+                my %data = @$value;
+                $data = \%data;
+            } elsif ($ref eq 'HASH') {
+                $data = $value;
+            }
+        }
 
-    if ($sigil eq '$') {
-        if (! $ref) {
-            $data = \$value;
-        } elsif ($ref eq 'ARRAY') {
-            my $val = @$value;
-            $data = \$val;
-        } elsif ($ref eq 'HASH') {
-            my @data = %$value;
-            my $val = @data;
-            $data = \$val;
-        }
-        
-    } elsif ($sigil eq '@') {
-        if (! $ref) {
-            $data = [$value];
-        } elsif ($ref eq 'ARRAY') {
-            $data = $value;
-        } elsif ($ref eq 'HASH') {
-            my @data = %$value;
-            $data = \@data;
-        }
-
-    } elsif ($sigil eq '%') {
-        if ($ref eq 'ARRAY' && @$value % 2 == 0) {
-            my %data = @$value;
-            $data = \%data;
-        } elsif ($ref eq 'HASH') {
-            $data = $value;
-        }
+    } elsif ($sigil eq '') {
+        $value = '';
+        $data = \$value;
     }
     
     return $data;
@@ -81,7 +87,7 @@ sub compile {
     while (my $template = pop(@templates)) {
         # If a template contains a newline, it is a string,
         # if not, it is a filename
-        
+
         my @lines;
         if ($template =~ /\n/) {
             @lines = map {"$_\n"} split(/\n/, $template);
@@ -89,7 +95,7 @@ sub compile {
         } else {
             my $fd = IO::File->new($template, 'r');
             die "Couldn't read $template: $!\n" unless $fd;
-    
+
             @lines = <$fd>;
             close $fd;
         }
@@ -170,7 +176,7 @@ sub encode_text {
 
 sub escape {
     my ($self, $data) = @_;
-    
+
     $data =~ s/([<>&])/'&#' . ord($1) . ';'/ge;
     return $data;
 }
@@ -181,7 +187,7 @@ sub escape {
 sub fetch_stack {
     my ($self, $sigil, $name) = @_;
 
-    my $value = '';
+    my $value;
     for my $hash (@{$self->{stack}}) {
         if (exists $hash->{$name}) {
             $value = $hash->{$name};
@@ -203,7 +209,7 @@ sub fill_in {
 
     my $data = $self->fetch_stack($sigil, $name);
     my $result = $self->render($data);
-    
+
     return \$result;
 }
 
@@ -221,7 +227,7 @@ sub get_command {
                     elsif => "} elsif (%%) {",
                     else => "} else {",
                     endif => "}",
-                    set => \&set,
+                    set => \&set_command,
                     while => "while (%%) {",
                     endwhile => "}",
                 	with => "\$self->push_stack(\\%%);",
@@ -236,7 +242,7 @@ sub get_command {
 
 sub init_stack {
     my ($self) = @_;
-    
+
     $self->{stack} = [];
     return;
 }
@@ -379,22 +385,22 @@ sub pop_stack {
 }
 
 #----------------------------------------------------------------------
-# Push one or more hashes on the stack 
+# Push one or more hashes on the stack
 
 sub push_stack {
     my ($self, @hash) = @_;
-    
+
     foreach my $hash (@hash) {
         my $newhash;
         if (ref $hash eq 'HASH') {
-            $newhash = $hash;   
+            $newhash = $hash;
         } else {
             $newhash = {data => $hash};
         }
-    
+
         unshift (@{$self->{stack}}, $newhash);
     }
-    
+
     return;
 }
 
@@ -403,10 +409,10 @@ sub push_stack {
 
 sub render {
     my ($self, $data) = @_;
-    
+
     my $result;
     my $ref = ref $data;
-    
+
     if ($ref eq 'SCALAR') {
         $result = $self->escape($$data);
 
@@ -434,12 +440,12 @@ sub render {
 
 
     return $result;
-}    
+}
 
 #----------------------------------------------------------------------
 # Generate code for the set command, which stores results in the hashlist
 
-sub set {
+sub set_command {
     my ($self, $arg) = @_;
 
     my ($var, $expr) = split (/\s*=\s*/, $arg, 2);
@@ -455,7 +461,7 @@ sub set_patterns {
     my ($self) = @_;
 
     $self->{command_start_pattern} = '^\s*' . quotemeta($self->{command_start});
-    
+
     $self->{command_end_pattern} = quotemeta($self->{command_end}) . '\s*$';
 
     $self->{command_end_pattern} = '\s*' . $self->{command_end_pattern}
