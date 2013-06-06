@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.80";
+our $VERSION = "0.81";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -65,7 +65,7 @@ sub coerce {
             }
         }
 
-    } elsif ($sigil eq '') {
+    } elsif ($sigil eq '$') {
         $value = '';
         $data = \$value;
     }
