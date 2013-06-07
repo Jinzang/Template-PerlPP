@@ -538,19 +538,19 @@ to the end of line. Commands are enclosed in html comments (<!-- -->) by
 default, but the command start and end strings are configurable via the new
 method. A command may be preceded by whitespace. If a command is a block
 command, it is terminated by the word "end" followed by the command name. For
-example, the for command is terminated by an endfor command and the if command
-by an endif command.
+example, the "for" command is terminated by an "endfor" command and the "if"
+command by an "endif" command.
 
 All lines may contain variables. As in Perl, variables are a sigil character
 (C<$>, C<@>, or C<%>) followed by one or more word characters. For example,
 C<$name> or C<@names>. To indicate a literal character instead of a variable,
 precede the sigil with a backslash. When you run the subroutine that this module
-generates, you pass it a reference to some data, which is usually a hash. The
-subroutine replaces variables with the value in the field of the same name in
-the hash. If the two disagree, the code will coerce the data. to the type of the
-sigil. You can pass a reference to an array instead of a hash to the subroutine
-this module generates. If you do, the template will use C<@data> to refer to the
-array.
+generates, you pass it a reference, usually a reference to a hash, containing
+some data. The subroutine replaces variables with the value in the field of the
+same name in the hash. If the two disagree, the code will coerce the data to the
+type of the sigil. You can pass a reference to an array instead of a hash to the
+subroutine this module generates. If you do, the template will use C<@data> to
+refer to the array.
 
 =head1 METHODS
 
@@ -561,7 +561,7 @@ the template to produce output.
 
 Using subtemplates along with a template allows you to place the common design
 elements in the template. You indicate where to replace parts of the template
-with parts of the template with the section command. If the template contains a
+with parts of the template with the "section" command. If the template contains a
 section command with the same name as one of the subtemplates, it replaces the
 contents of the template inside the section with the contents of the
 corresponding block in the subtemplate.
@@ -658,7 +658,7 @@ displays the entire phone list.
 =item section
 
 If a template contains a section, the text until the endsection command will be
-replaced by the section block with the same name one the subtemplates. For
+replaced by the section block with the same name in one the subtemplates. For
 example, if the main template has the code
 
     <!-- section footer -->
