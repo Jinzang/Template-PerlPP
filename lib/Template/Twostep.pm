@@ -7,7 +7,7 @@ use integer;
 
 use IO::File;
 
-our $VERSION = "0.81";
+our $VERSION = "0.82";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -66,7 +66,6 @@ sub coerce {
         }
 
     } elsif ($sigil eq '$') {
-        $value = '';
         $data = \$value;
     }
     
@@ -414,7 +413,7 @@ sub render {
     my $ref = ref $data;
 
     if ($ref eq 'SCALAR') {
-        $result = $self->escape($$data);
+        $result = defined $$data ? $self->escape($$data) : '';
 
     } elsif ($ref eq 'ARRAY') {
         my @result;
@@ -612,7 +611,8 @@ rendered. This is mostly intended for debugging, as it does not provide fine
 control over how the structures are rendered. For finer control, use the
 commands described below so that the scalar fields in the structures can be
 accessed. Scalar fields have the characters <, >, and & escaped before
-interpolating them.
+interpolating them. Undefined fields are replaced with the empty string when
+rendered.
 
 The following commands are supported in templates:
 
