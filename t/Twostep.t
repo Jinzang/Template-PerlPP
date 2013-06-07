@@ -32,12 +32,13 @@ is($result, '&#60; &#38; &#62;', "Escape"); # test 3
 #----------------------------------------------------------------------
 # Test render
 
-my $data = \'<>';
-$result = $pp->render($data);
-is($result, '&#60;&#62;', "Rendar scalar"); # test 4
+my $data;
+$result = $pp->render(\$data);
+is($result, '', "Rendar undef"); # test 4
 
-$result = $pp->render();
-is($result, '', "Rendar undef"); # test 5
+$data = \'<>';
+$result = $pp->render($data);
+is($result, '&#60;&#62;', "Rendar scalar"); # test 5
 
 $data = [1, 2];
 $result = $pp->render($data);
