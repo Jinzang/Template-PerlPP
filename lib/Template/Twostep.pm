@@ -346,7 +346,7 @@ sub parse_code {
                 $code .= $command->($self, $arg);
 
             } else {
-                croak "I don't know how to handle a $ref: $cmd";
+                die "I don't know how to handle a $ref: $cmd";
             }
 
         } else {
@@ -477,7 +477,7 @@ sub store_stack {
     my ($self, $var, @val) = @_;
 
     my ($sigil, $name) = $var =~ /([\$\@\%])(\w+)/;
-    croak "Unrecognized variable type: $name" unless defined $sigil;
+    die "Unrecognized variable type: $name" unless defined $sigil;
 
     my $i;
     for ($i = 0; $i < @{$self->{stack}}; $i ++) {
@@ -515,14 +515,14 @@ Template::Twostep - Compile templates into a subroutine
 
     use Template::Twostep;
     my $tt = Template::Twostep->new;
-    $sub = $tt->compile($template, $subtemplate);
+    my $sub = $tt->compile($template, $subtemplate);
     my $output = $sub->($hash);
 
 =head1 DESCRIPTION
 
-This module simplifies the job of producing repetitive text output by letting
-you put data into a template. Templates also support the control structures in
-Perl: for and while loops, if else blocks, and some others. Creating output
+This module simplifies the job of producing html text output by letting
+you put data into a template. Templates support the control structures in
+Perl: "for" and "while" loops, "if-else" blocks, and some others. Creating output
 is a two step process. First you generate a subroutine from one or more
 templates, then you call the subroutine with your data to generate the output.
 This approach has the advantage of speeding things up when the same template
@@ -535,23 +535,23 @@ writing it is that it provides better control over whitespace than other
 template modules, which can be important for some data formats.
 
 The template format is line oriented. Commands occupy a single line and continue
-to the end of line. Commands are enclosed in html comments (<!-- -->) by
-default, but the command start and end strings are configurable via the new
-method. A command may be preceded by whitespace. If a command is a block
-command, it is terminated by the word "end" followed by the command name. For
-example, the "for" command is terminated by an "endfor" command and the "if"
-command by an "endif" command.
+to the end of line. By default dommands are enclosed in html comments (<!--
+-->), but the command start and end strings are configurable via the new method.
+A command may be preceded by whitespace. If a command is a block command, it is
+terminated by the word "end" followed by the command name. For example, the
+"for" command is terminated by an "endfor" command and the "if" command by an
+"endif" command.
 
 All lines may contain variables. As in Perl, variables are a sigil character
-(C<$>, C<@>, or C<%>) followed by one or more word characters. For example,
+('$,' '@,' or '%') followed by one or more word characters. For example,
 C<$name> or C<@names>. To indicate a literal character instead of a variable,
 precede the sigil with a backslash. When you run the subroutine that this module
 generates, you pass it a reference, usually a reference to a hash, containing
-some data. The subroutine replaces variables with the value in the field of the
-same name in the hash. If the two disagree, the code will coerce the data to the
-type of the sigil. You can pass a reference to an array instead of a hash to the
-subroutine this module generates. If you do, the template will use C<@data> to
-refer to the array.
+some data. The subroutine replaces variables in the template with the value in
+the field of the same name in the hash. If the types of the two disagree, the
+code will coerce the data to the type of the sigil. You can pass a reference to
+an array instead of a hash to the subroutine this module generates. If you do,
+the template will use C<@data> to refer to the array.
 
 =head1 METHODS
 
@@ -562,39 +562,39 @@ the template to produce output.
 
 Using subtemplates along with a template allows you to place the common design
 elements in the template. You indicate where to replace parts of the template
-with parts of the template with the "section" command. If the template contains a
-section command with the same name as one of the subtemplates, it replaces the
-contents of the template inside the section with the contents of the
-corresponding block in the subtemplate.
+with parts of the subtemplate by using the "section" command. If the template
+contains a section block with the same name as a section block in the
+subtemplates it replaces the contents inside the section block in the template
+with the contents of the corresponding block in the subtemplate.
 
 =over 4
 
 =item $obj = Template::Twostep->new(command_start => '::', command_end => '');
 
 Create a new parser. The configuration allows you to set the string which starts
-a command (command_start) and the string which ends a command (command_end).
-All commands end at the end of line. However, you may widh to place commends
-inside comments and comments may require a closing string. By setting
-command_end, the closing string will be stripped from the end of the string.
+a command (command_start) and the string which ends a command (command_end). All
+commands end at the end of line. However, you may wish to place commends inside
+comments and comments may require a closing string. By setting command_end, the
+closing string will be stripped from the end of the command.
 
 =item $sub = $obj->compile($template, $subtemplate);
 
-Generate a subroutine used to render data from a template and optionally one or
-more subtemplates. It can be invoked by an object created by a call to new, or
-you can invoke it using the package name (Template::Twostep), in which case it
-will first call new for you. If the template string does not contain a newline,
-the method assumes it is a filename and the method reads the template from that
+Generate a subroutine used to render data from a template and optionally from
+one or more subtemplates. It can be invoked by an object created by a call to
+new, or you can invoke it using the package name (Template::Twostep), in which
+case it will first call new for you. If the template string does not contain a
+newline, the method assumes it is a filename and it reads the template from that
 file.
 
 =back
 
 =head1 TEMPLATE SYNTAX
 
-If the first non-white char on a line is the coomand start string, the line is
-interpreted as a command. The command name continues up to the first white space
-character. The text following the initial span of whitespace is the command
-argument. The argument continues up to the command end string, or if this is
-emoty, to the end of the line.
+If the first non-white characters on a line are the coomand start string, the
+line is interpreted as a command. The command name continues up to the first
+white space character. The text following the initial span of whitespace is the
+command argument. The argument continues up to the command end string, or if
+this is empty, to the end of the line.
 
 Variables in the template have the same format as ordinary Perl variables,
 a string of word characters starting with a sigil character. for example,
@@ -602,18 +602,17 @@ a string of word characters starting with a sigil character. for example,
     $SUMMARY @data %dictionary
 
 are examples of variables. The subroutine this module generates will substitute
-values in the data it is passed for the variables. If a corresponding field is
-not found in the data, the interpolator substitutes an empty string. New
-variables can be added with the C<set> command.
+values in the data it is passed for the variables in the template. New variables
+can be added with the "set" command.
 
 Arrays and hashes are rendered as unordered lists and definition lists when
 interpolating them. This is done recursively, so arbitary structures can be
 rendered. This is mostly intended for debugging, as it does not provide fine
 control over how the structures are rendered. For finer control, use the
 commands described below so that the scalar fields in the structures can be
-accessed. Scalar fields have the characters <, >, and & escaped before
+accessed. Scalar fields have the characters '<,' '>,' and '&' escaped before
 interpolating them. Undefined fields are replaced with the empty string when
-rendered.
+rendering.
 
 The following commands are supported in templates:
 
@@ -621,17 +620,17 @@ The following commands are supported in templates:
 
 =item do
 
-The remainder of the line is interpreted as perl code. For assignments, use
+The remainder of the line is interpreted as Perl code. For assignments, use
 the set command.
 
 =item if
 
 The text until the matching C<endif> is included only if the expression in the
-C<if> command is true.If false, the text is skipped. The C<if> command can
-contain an C<else>, in which case the text before the C<else> is included if
-the expression in the C<if> command is true and the text after the C<else> is
-included if it is false. You can also place an C<elsif> command in the C<if>
-block, which includes the following text if its expression is true.
+"if" command is true. If false, the text is skipped. The "if" command can contain
+an C<else>, in which case the text before the "else" is included if the
+expression in the "if" command is true and the text after the "else" is included
+if it is false. You can also place an "elsif" command in the "if" block, which
+includes the following text if its expression is true.
 
     <!-- if $highlight eq 'y' -->
     <em>$text</em>
@@ -641,10 +640,10 @@ block, which includes the following text if its expression is true.
 
 =item for
 
-Expand the text between the C<for> and <endfor> commands several times. The
-for command takes a name of a field in a hash as its argument. The value of this
+Expand the text between the "for" and "endfor" commands several times. The
+"for" command takes a name of a field in a hash as its argument. The value of this
 name should be a reference to a list. It will expand the text in the for block
-once for each element in the list. Within the for block, any element of the list
+once for each element in the list. Within the "for" block, any element of the list
 is accesible. This is especially useful for displaying lists of hashes. For
 example, suppose the data field name PHONELIST points to an array. This array is
 a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
@@ -673,8 +672,8 @@ and the subtemplate has the lines
     <!-- endsection -->
 
 The text will be copied from a section in the subtemplate into a section of the
-same name in the template. If there is no block with the same name, the text is
-not changed.
+same name in the template. If there is no block with the same name in the
+subtemplate, the text is used unchanged.
 
 =item set
 
@@ -698,13 +697,50 @@ expression following the C<while> is true.
 
 =item with
 
-Lists with a hash can be accessed using the for command. Hashes within a hash
-are accessed using the with command. For example:
+Lists within a hash can be accessed using the "for" command. Hashes within a
+hash are accessed using the "with" command. For example:
 
     <!-- with %address -->
     <p><i>$street<br />
     $city, $state $zip</i></p.
     <!-- endwith -->
+
+=back
+
+=head1 ERRORS
+
+What to check when this module throws an error
+
+=over 4
+
+=item Couldn't read template
+
+The template is in a file and the file could not be opened. Check the filename
+and permissions on the file. Relative filenames can cause probleams and the web
+server is probablye running another account than yours.
+
+=item Illegal type conversion
+
+The sigil on a variable differs from the data passed to the subroutine and
+conversion. between the two would not be legal. Or you forgot to escape the '@'
+in an email address by preceding it with a backslash.
+
+=item Unknown command
+
+Either a command was spelled incorrectly or a line that is not a command
+begins with the command start string.
+
+=item Missing end
+
+The template contains a command for the start of a block, but
+not the command for the end of the block. For example  an "if" command
+is missing an "endif" command.
+
+=item Mismatched block end
+
+The parser found a different end command than the begin command for the block
+it was parsing. Either an end command is missing, or block commands are nested
+incorrectly.
 
 =back
 
