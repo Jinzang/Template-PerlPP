@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use integer;
 
+use Carp;
 use IO::File;
 
 our $VERSION = "0.82";
@@ -93,7 +94,7 @@ sub compile {
 
         } else {
             my $fd = IO::File->new($template, 'r');
-            die "Couldn't read $template: $!\n" unless $fd;
+            croak "Couldn't read $template: $!" unless $fd;
 
             @lines = <$fd>;
             close $fd;
@@ -128,7 +129,7 @@ return $text;
 EOQ
 
     my $sub = eval ($code);
-    die $@ unless $sub;
+    croak $@ unless $sub;
     return $sub;
 }
 
@@ -195,7 +196,7 @@ sub fetch_stack {
     }
 
     $value = $self->coerce($sigil, $value);
-    die "Illegal type conversion: $sigil$name\n" unless defined $value;
+    croak "Illegal type conversion: $sigil$name" unless defined $value;
 
     return $value;
 }
@@ -282,8 +283,8 @@ sub parse_block {
         if (defined $cmd) {
             if (substr($cmd, 0, 3) eq 'end') {
                 $arg = substr($cmd, 3);
-                die "Mismatched block end ($command/$arg)"
-                    if defined $arg && $arg ne $command;
+                croak "Mismatched block end ($command/$arg)"
+                      if defined $arg && $arg ne $command;
 
                 push(@block, $line);
                 return @block;
@@ -309,7 +310,7 @@ sub parse_block {
         }
     }
 
-    die "Missing end" if $command;
+    croak "Missing end" if $command;
     return @block;
 }
 
@@ -333,7 +334,7 @@ sub parse_code {
             }
 
             my $command = $self->get_command($cmd);
-            die "Unknown command: $cmd\n" unless defined $command;
+            croak "Unknown command: $cmd" unless defined $command;
 
             my $ref = ref ($command);
             if (! $ref) {
@@ -345,7 +346,7 @@ sub parse_code {
                 $code .= $command->($self, $arg);
 
             } else {
-                die "I don't know how to handle a $ref: $cmd";
+                croak "I don't know how to handle a $ref: $cmd";
             }
 
         } else {
@@ -476,7 +477,7 @@ sub store_stack {
     my ($self, $var, @val) = @_;
 
     my ($sigil, $name) = $var =~ /([\$\@\%])(\w+)/;
-    die "Unrecognized variable type: $name" unless defined $sigil;
+    croak "Unrecognized variable type: $name" unless defined $sigil;
 
     my $i;
     for ($i = 0; $i < @{$self->{stack}}; $i ++) {
