@@ -742,6 +742,10 @@ The parser found a different end command than the begin command for the block
 it was parsing. Either an end command is missing, or block commands are nested
 incorrectly.
 
+=item Syntax error
+
+The expression used in a command is not valid Perl.
+
 =back
 
 =head1 LICENSE
