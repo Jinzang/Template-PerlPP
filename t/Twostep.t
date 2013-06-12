@@ -27,7 +27,7 @@ can_ok($pp, qw(new compile)); # test 2
 
 
 my $result = $pp->escape('< & >');
-is($result, '&#60; &#38; &#62;', "Escape"); # test 3
+is($result, '&#60; & &#62;', "Escape"); # test 3
 
 #----------------------------------------------------------------------
 # Test render

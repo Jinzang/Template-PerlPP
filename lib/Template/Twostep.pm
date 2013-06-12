@@ -8,7 +8,7 @@ use integer;
 use Carp;
 use IO::File;
 
-our $VERSION = "0.82";
+our $VERSION = "0.83";
 
 #----------------------------------------------------------------------
 # Create a new template engine
@@ -177,7 +177,7 @@ sub encode_text {
 sub escape {
     my ($self, $data) = @_;
 
-    $data =~ s/([<>&])/'&#' . ord($1) . ';'/ge;
+    $data =~ s/($self->{escaped_chars_pattern})/'&#' . ord($1) . ';'/ge;
     return $data;
 }
 
@@ -265,6 +265,7 @@ sub parameters {
     my $parameters = {
                       command_start => '<!-- ',
                       command_end => '-->',
+                      escaped_chars => '<>',
                       };
 
     return $parameters;
@@ -467,6 +468,9 @@ sub set_patterns {
     $self->{command_end_pattern} = '\s*' . $self->{command_end_pattern}
                 if length $self->{command_end};
 
+    $self->{escaped_chars_pattern} =
+        '[' . quotemeta($self->{escaped_chars}) . ']';
+            
     return;
 }
 
@@ -571,11 +575,12 @@ with the contents of the corresponding block in the subtemplate.
 
 =item $obj = Template::Twostep->new(command_start => '::', command_end => '');
 
-Create a new parser. The configuration allows you to set the string which starts
-a command (command_start) and the string which ends a command (command_end). All
-commands end at the end of line. However, you may wish to place commends inside
-comments and comments may require a closing string. By setting command_end, the
-closing string will be stripped from the end of the command.
+Create a new parser. The configuration allows you to set a set of characters to
+escape when found in the data (escaped_chars), the string which starts a command
+(command_start), and the string which ends a command (command_end). All commands
+end at the end of line. However, you may wish to place commends inside comments
+and comments may require a closing string. By setting command_end, the closing
+string will be stripped from the end of the command.
 
 =item $sub = $obj->compile($template, $subtemplate);
 
