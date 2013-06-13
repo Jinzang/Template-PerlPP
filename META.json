@@ -52,5 +52,15 @@
       }
    },
    "release_status" : "unstable",
-   "version" : "0.74"
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/Jinzang/Template-Twostep/issues"
+      },
+      "homepage" : "https://github.com/Jinzang/Template-Twostep",
+      "repository" : {
+         "url" : "https://github.com/Jinzang/Template-Twostep.git",
+         "web" : "https://github.com/Jinzang/Template-Twostep"
+      }
+   },
+   "version" : "0.83"
 }
