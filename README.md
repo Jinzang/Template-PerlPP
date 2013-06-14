@@ -16,14 +16,6 @@ you put data into a template. Templates support the control structures in
 Perl: "for" and "while" loops, "if-else" blocks, and some others. Creating output
 is a two step process. First you generate a subroutine from one or more
 templates, then you call the subroutine with your data to generate the output.
-This approach has the advantage of speeding things up when the same template
-is used more than once. However, it also poses a security risk because code
-you might not want executed may be included in the template. For this reason
-if the script using this module can be run from the web, make sure the account
-that runs it cannot write to the template. There are many template handling
-modules and you might wonder why there needs to be another. My reason for
-writing it is that it provides better control over whitespace than other
-template modules, which can be important for some data formats.
 
 The template format is line oriented. Commands occupy a single line and continue
 to the end of line. By default dommands are enclosed in html comments (<!--
@@ -44,10 +36,23 @@ code will coerce the data to the type of the sigil. You can pass a reference to
 an array instead of a hash to the subroutine this module generates. If you do,
 the template will use `@data` to refer to the array.
 
+There are several other template packages. I wrote this one to have the specific
+set of featurees I want in a template package. First, I wanted templates to be
+compiled into code. This approach has the advantage of speeding things up when
+the same template is used more than once. However, it also poses a security risk
+because code you might not want executed may be included in the template. For
+this reason if the script using this module can be run from the web, make sure
+the account that runs it cannot write to the template. I made the templates
+command language line oriented rather than tag oriented to prevent spurious
+whitespace from appearing in the output. Template commands and variables are
+similar to Perl for familiarity. The power of the template language is limited
+to the essentials for the sake of simplicity and toprevent mixing code with
+presentation.
+
 # METHODS
 
 This module has two public methods. The first, new, changes the module
-defaults. Compile generates a subroutine from one or more templates. You then
+defaults. Compile generates a subroutine from one or more templates. You Tthen
 call this subroutine with a reference to the data you want to substitute into
 the template to produce output.
 
@@ -98,9 +103,13 @@ interpolating them. This is done recursively, so arbitary structures can be
 rendered. This is mostly intended for debugging, as it does not provide fine
 control over how the structures are rendered. For finer control, use the
 commands described below so that the scalar fields in the structures can be
-accessed. Scalar fields have the characters '<,' '>,' and '&' escaped before
-interpolating them. Undefined fields are replaced with the empty string when
-rendering.
+accessed. Scalar fields have the characters '<' and '>' escaped before
+interpolating them. This set of characters can be changed by setting the
+configuration prameter escaped chars. Undefined fields are replaced with the
+empty string when rendering. If the type of data passed to the subroutine
+differs from the sigil on the variable the variable is coerced to the type of
+the sigil. This works the same as an assignment. If an array is refernced as a
+scalar, the length of the array is output.
 
 The following commands are supported in templates:
 
