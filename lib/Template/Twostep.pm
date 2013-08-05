@@ -550,14 +550,14 @@ an array instead of a hash to the subroutine this module generates. If you do,
 the template will use C<@data> to refer to the array.
 
 There are several other template packages. I wrote this one to have the specific
-set of featurees I want in a template package. First, I wanted templates to be
+set of features I want in a template package. First, I wanted templates to be
 compiled into code. This approach has the advantage of speeding things up when
 the same template is used more than once. However, it also poses a security risk
 because code you might not want executed may be included in the template. For
 this reason if the script using this module can be run from the web, make sure
 the account that runs it cannot write to the template. I made the templates
 command language line oriented rather than tag oriented to prevent spurious
-whitespace from appearing in the output. Template commands and variables are
+white space from appearing in the output. Template commands and variables are
 similar to Perl for familiarity. The power of the template language is limited
 to the essentials for the sake of simplicity and to prevent mixing code with
 presentation.
@@ -658,7 +658,7 @@ Expand the text between the "for" and "endfor" commands several times. The
 "for" command takes a name of a field in a hash as its argument. The value of this
 name should be a reference to a list. It will expand the text in the for block
 once for each element in the list. Within the "for" block, any element of the list
-is accessable. This is especially useful for displaying lists of hashes. For
+is accessible. This is especially useful for displaying lists of hashes. For
 example, suppose the data field name PHONELIST points to an array. This array is
 a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
 
