@@ -531,9 +531,9 @@ is a two step process. First you generate a subroutine from one or more
 templates, then you call the subroutine with your data to generate the output.
 
 The template format is line oriented. Commands occupy a single line and continue
-to the end of line. By default dommands are enclosed in html comments (<!--
+to the end of line. By default commands are enclosed in html comments (<!--
 -->), but the command start and end strings are configurable via the new method.
-A command may be preceded by whitespace. If a command is a block command, it is
+A command may be preceded by white space. If a command is a block command, it is
 terminated by the word "end" followed by the command name. For example, the
 "for" command is terminated by an "endfor" command and the "if" command by an
 "endif" command.
@@ -559,7 +559,7 @@ the account that runs it cannot write to the template. I made the templates
 command language line oriented rather than tag oriented to prevent spurious
 whitespace from appearing in the output. Template commands and variables are
 similar to Perl for familiarity. The power of the template language is limited
-to the essentials for the sake of simplicity and toprevent mixing code with
+to the essentials for the sake of simplicity and to prevent mixing code with
 presentation.
 
 =head1 METHODS
@@ -600,9 +600,9 @@ file.
 
 =head1 TEMPLATE SYNTAX
 
-If the first non-white characters on a line are the coomand start string, the
+If the first non-white characters on a line are the command start string, the
 line is interpreted as a command. The command name continues up to the first
-white space character. The text following the initial span of whitespace is the
+white space character. The text following the initial span of white space is the
 command argument. The argument continues up to the command end string, or if
 this is empty, to the end of the line.
 
@@ -616,16 +616,16 @@ values in the data it is passed for the variables in the template. New variables
 can be added with the "set" command.
 
 Arrays and hashes are rendered as unordered lists and definition lists when
-interpolating them. This is done recursively, so arbitary structures can be
+interpolating them. This is done recursively, so arbitrary structures can be
 rendered. This is mostly intended for debugging, as it does not provide fine
 control over how the structures are rendered. For finer control, use the
 commands described below so that the scalar fields in the structures can be
 accessed. Scalar fields have the characters '<' and '>' escaped before
 interpolating them. This set of characters can be changed by setting the
-configuration prameter escaped chars. Undefined fields are replaced with the
+configuration parameter escaped chars. Undefined fields are replaced with the
 empty string when rendering. If the type of data passed to the subroutine
 differs from the sigil on the variable the variable is coerced to the type of
-the sigil. This works the same as an assignment. If an array is refernced as a
+the sigil. This works the same as an assignment. If an array is referenced as a
 scalar, the length of the array is output.
 
 The following commands are supported in templates:
@@ -658,7 +658,7 @@ Expand the text between the "for" and "endfor" commands several times. The
 "for" command takes a name of a field in a hash as its argument. The value of this
 name should be a reference to a list. It will expand the text in the for block
 once for each element in the list. Within the "for" block, any element of the list
-is accesible. This is especially useful for displaying lists of hashes. For
+is accessable. This is especially useful for displaying lists of hashes. For
 example, suppose the data field name PHONELIST points to an array. This array is
 a list of hashes, and each hash has two entries, NAME and PHONE. Then the code
 
@@ -730,8 +730,8 @@ What to check when this module throws an error
 =item Couldn't read template
 
 The template is in a file and the file could not be opened. Check the filename
-and permissions on the file. Relative filenames can cause probleams and the web
-server is probablye running another account than yours.
+and permissions on the file. Relative filenames can cause problems and the web
+server is probably running another account than yours.
 
 =item Illegal type conversion
 
