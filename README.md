@@ -63,7 +63,7 @@ contains a section block with the same name as a section block in the
 subtemplates it replaces the contents inside the section block in the template
 with the contents of the corresponding block in the subtemplate.
 
-- $obj = Template::Twostep->new(command\_start => '::', command\_end => '');
+- `$obj = Template::Twostep-`new(command\_start => '::', command\_end => '');>
 
     Create a new parser. The configuration allows you to set a set of characters to
     escape when found in the data (escaped\_chars), the string which starts a command
@@ -72,7 +72,7 @@ with the contents of the corresponding block in the subtemplate.
     and comments may require a closing string. By setting command\_end, the closing
     string will be stripped from the end of the command.
 
-- $sub = $obj->compile($template, $subtemplate);
+- `$sub = $obj-`compile($template, $subtemplate);>
 
     Generate a subroutine used to render data from a template and optionally from
     one or more subtemplates. It can be invoked by an object created by a call to

@@ -578,7 +578,7 @@ with the contents of the corresponding block in the subtemplate.
 
 =over 4
 
-=item $obj = Template::Twostep->new(command_start => '::', command_end => '');
+=item C<$obj = Template::Twostep->new(command_start => '::', command_end => '');>
 
 Create a new parser. The configuration allows you to set a set of characters to
 escape when found in the data (escaped_chars), the string which starts a command
@@ -587,7 +587,7 @@ end at the end of line. However, you may wish to place commends inside comments
 and comments may require a closing string. By setting command_end, the closing
 string will be stripped from the end of the command.
 
-=item $sub = $obj->compile($template, $subtemplate);
+=item C<$sub = $obj->compile($template, $subtemplate);>
 
 Generate a subroutine used to render data from a template and optionally from
 one or more subtemplates. It can be invoked by an object created by a call to
