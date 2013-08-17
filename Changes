@@ -1,8 +1,6 @@
 Revision history for Perl extension Template-Twostep
 
 {{$NEXT}}
-
-1.01 2013-08-14T23:43:59Z
     - made tests os independent
 
 1.00 2013-08-13T00:00:03Z

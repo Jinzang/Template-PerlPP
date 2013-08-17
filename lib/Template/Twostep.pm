@@ -298,8 +298,9 @@ sub parse_block {
 
                 if ($cmd eq 'section') {
                     pop(@sub_block);
-                    $sections->{$arg} = \@sub_block unless exists $sections->{$arg};
-                    push(@block, @{$sections->{$arg}});
+                    my ($name, $rest) = split(' ', $arg, 2);
+                    $sections->{$name} = \@sub_block unless exists $sections->{$name};
+                    push(@block, @{$sections->{$name}});
 
                 } else {
                     push(@block, $line, @sub_block);

@@ -93,9 +93,9 @@ is_deeply($data, {1 => 3}, "Coerce hash to hash"); # test 19
 # Test parse_block
 
 my $template = <<'EOQ';
-<!-- section header -->
+<!-- section header per folder -->
 Header
-<!-- endsection -->
+<!-- endsection header -->
 <!-- set $i = 0 -->
 <!-- for @data -->
   <!-- set $i = $i + 1 -->
@@ -107,7 +107,7 @@ Odd line
 <!-- endfor -->
 <!-- section footer -->
 Footer
-<!-- endsection -->
+<!-- endsection footer -->
 EOQ
 
 my $sections = {};
