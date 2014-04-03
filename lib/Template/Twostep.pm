@@ -596,7 +596,7 @@ Create a new parser. The configuration allows you to set a set of characters to
 escape when found in the data (escaped_chars), the string which starts a command
 (command_start), the string which ends a command (command_end), and whether
 section commands are kept in the output (keep_sections). All commands end at the
-end of line. However, you may wish to place commends inside comments and
+end of line. However, you may wish to place commands inside comments and
 comments may require a closing string. By setting command_end, the closing
 string will be stripped from the end of the command.
 
