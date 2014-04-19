@@ -8,7 +8,7 @@ use integer;
 use Carp;
 use IO::File;
 
-our $VERSION = "1.03";
+our $VERSION = "1.04";
 
 #----------------------------------------------------------------------
 # Create a new template engine
