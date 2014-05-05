@@ -2,6 +2,9 @@ Revision history for Perl extension Template-Twostep
 
 {{$NEXT}}
 
+1.05 2014-05-05T12:00:38Z
+    - rewrote to use improvements in search.cgi
+
 1.04 2014-04-19T15:36:51Z
     - added each/endeach commands to template
 
